@@ -177,8 +177,12 @@
                     </Grid>
                 </dx:DXTabItem>
                 <dx:DXTabItem Header="Слои">
-                    <Grid Background="Transparent" Margin="0">
-                        <ListBox  Padding="0" Margin="0" Grid.Column="1" ItemsSource="{Binding layersData}" HorizontalAlignment="Stretch">
+                    <Grid Background="Transparent" Margin="0" HorizontalAlignment="Stretch">
+                        <ListBox  Padding="0" Margin="0" Grid.Column="1"  HorizontalAlignment="Stretch"  ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                            <ListBox.Items>
+                                <MenuItem></MenuItem>
+                                <MenuItem></MenuItem>
+                            </ListBox.Items>
                             <ListBox.ItemContainerStyle>
                                 <Style TargetType="ListBoxItem">
                                     <Setter Property="HorizontalContentAlignment" Value="Stretch"></Setter>
@@ -197,7 +201,7 @@
                                             </Grid.ColumnDefinitions>
                                             <Border BorderThickness="0 0 0 1" BorderBrush="#FFCFC28A">
                                                 <StackPanel Orientation="Horizontal">
-                                                    <Button Height="30" Background="Transparent" BorderBrush="Transparent" Cursor="Hand">
+                                                    <Button Height="30" Background="Transparent" BorderBrush="Transparent" Cursor="Hand"  ToolTip="Выбрать слой">
                                                         <Button.Style>
                                                             <Style TargetType="Button">
                                                                 <Style.Setters>
@@ -212,7 +216,7 @@
                                                             </Style>
                                                         </Button.Style>
                                                     </Button>
-                                                    <Button Height="30" Background="Transparent" BorderBrush="Transparent" Cursor="Hand">
+                                                    <Button Height="30" Background="Transparent" BorderBrush="Transparent" Cursor="Hand"  ToolTip="Скрыть\показать слой">
                                                         <Button.Style>
                                                             <Style TargetType="Button">
                                                                 <Style.Setters>
@@ -240,7 +244,22 @@
                                                             </Style>
                                                         </Button.Style>
                                                     </Button>
-                                                    <Button Height="30" Background="Transparent" BorderBrush="Transparent" Cursor="Hand">
+                                                    <Button Height="30" Background="Transparent" BorderBrush="Transparent" Cursor="Hand" ToolTip="Переименовать слой">
+                                                        <Button.Style>
+                                                            <Style TargetType="Button">
+                                                                <Style.Setters>
+                                                                    <Setter Property="ContentTemplate" >
+                                                                        <Setter.Value>
+                                                                            <DataTemplate>
+                                                                                <Image Source="{dx:DXImage 'Images/Actions/EditName_32x32.png'}" Stretch="UniformToFill"/>
+                                                                            </DataTemplate>
+                                                                        </Setter.Value>
+                                                                    </Setter>
+                                                                </Style.Setters>
+                                                            </Style>
+                                                        </Button.Style>
+                                                    </Button>
+                                                    <Button Height="30" Background="Transparent" BorderBrush="Transparent" Cursor="Hand"  ToolTip="Удалить слой">
                                                         <Button.Style>
                                                             <Style TargetType="Button">
                                                                 <Style.Setters>

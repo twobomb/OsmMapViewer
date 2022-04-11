@@ -8,9 +8,8 @@ using System.Threading.Tasks;
 
 namespace OsmMapViewer.ViewModel
 {
-    public abstract class ViewModelBase : INotifyPropertyChanged
-    {
-        public string _WaitText= "";// Текст 
+    public abstract class ViewModelBase : INotifyPropertyChanged {
+
         public event PropertyChangedEventHandler PropertyChanged;
 
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
