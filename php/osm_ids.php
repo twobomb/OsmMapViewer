@@ -1,15 +1,21 @@
 <?PHP
+require_once "./db_config.php";
+
 
 if($_SERVER["REQUEST_METHOD"] == "POST"):
 	$tags = json_decode(file_get_contents('php://input'));
+	
 
-//var_dump($tags);
-
-$dbconn = pg_connect("host=localhost dbname=gis user=postgres password=123456")
-    or die('Could not connect: ' . pg_last_error());
-
+$dbconn = pg_connect("host=$DB_HOST dbname=$DB_NAME user=$DB_USER password=$DB_PWD");
+if($dbconn === false){
+	http_response_code(505);
+	die;
+}
 
 $tables =[];
+
+try{
+
 if(!isset($_GET["line"]) || $_GET["line"] == "1")
 	$tables["planet_osm_line"] =[];
 if(!isset($_GET["polygon"]) || $_GET["polygon"] == "1")
@@ -70,6 +76,11 @@ while ($line = pg_fetch_array($result, null, PGSQL_ASSOC))
 
 //echo json_encode($arr);
 echo implode(",",$arr);
+
+}catch(Exception $e){
+	http_response_code(505);
+	die;
+}
 
 pg_free_result($result);
 
