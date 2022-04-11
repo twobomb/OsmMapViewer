@@ -23,14 +23,15 @@ using Timer = System.Timers.Timer;
 
 namespace OsmMapViewer.ViewModel
 {
-    public class MainWindowViewModel: ViewModelBase {
+    public class MainWindowViewModel: ViewModelBase
+    {
 
-
+        public int LayerIndexCreate = 1;
         
         private static readonly HttpClient httpClient = new HttpClient();
         private readonly MainWindow Window;
         //display down text
-        private Timer displayDownTextHide = new Timer(5000) {
+        private Timer displayDownTextHide = new Timer(10000) {
             AutoReset = false
         };
 
@@ -160,6 +161,8 @@ namespace OsmMapViewer.ViewModel
             });
         }
 
+        public ObservableCollection<LayerData> Layers { get; set; } = new ObservableCollection<LayerData>();
+
         public ObservableCollection<MapObject> SearchResults { get; set; } = new ObservableCollection<MapObject>();
         
         public ObservableCollection<MapObject> AddressesResults{ get; set; }
@@ -180,6 +183,7 @@ namespace OsmMapViewer.ViewModel
             {
                 Console.WriteLine(args.Selection.Count);
             };*/
+            Layers.CollectionChanged += Layers_CollectionChanged;
             Window.mapControl.Layers.Add(SearchResultVector);
             AddressesResults = new ObservableCollection<MapObject>();
             Window.lb_searchBox.PreviewMouseUp += (o, e) =>{
@@ -231,6 +235,24 @@ namespace OsmMapViewer.ViewModel
 
         }
 
+        private void Layers_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+        {
+            switch (e.Action.ToString())
+            {
+                case "Add":
+                    foreach (var eNewItem in e.NewItems)
+                        Window.mapControl.Layers.Add((LayerData) eNewItem);
+                    break;
+                case "Reset":
+                    foreach (var eOldItem in e.OldItems)
+                        Window.mapControl.Layers.Remove((LayerData)eOldItem);
+                    break;
+                case "Remove":
+                    foreach (var eOldItem in e.OldItems)
+                        Window.mapControl.Layers.Remove((LayerData)eOldItem);
+                    break;
+            }
+        }
 
         public string searchText = "";
         public string SearchText
@@ -259,6 +281,95 @@ namespace OsmMapViewer.ViewModel
 
         private RelayCommand selectFromDicts;
         public RelayCommand SelectFromDicts
+        {
+            get
+            {
+                return selectFromDicts ??
+                       (selectFromDicts = new RelayCommand(obj =>
+                       {
+                           Selector sel = new Selector();
+                           if (sel.ShowDialog().GetValueOrDefault(false))
+                           {
+                               var vm = sel.DataContext as SelectorViewModel;
+                               var t = vm.CheckedItems;
+                               if (t.Count == 0) {
+                                   Utils.MsgBoxWarning("Не указано ни одного тега!");
+                                   return;
+                               }
+
+                               var cancelToken = WaitVMM.ShowWithCancel();
+                               
+                               var json = JsonConvert.SerializeObject(t);
+
+                               List<MapObject> resultArr = new List<MapObject>();
+
+                               var task= httpClient.PostAsync(string.Format("{0}?line={1}&polygon={2}&point={3}", Config.GET_DATA,IsLineChecked?"1":"0",IsPolygonChecked?"1":"0",IsPointChecked?"1":"0"), new StringContent(json,Encoding.UTF8));
+                               task.GetAwaiter().OnCompleted(() => {
+                                   if (cancelToken.IsCancellationRequested) {
+                                       WaitVMM.WaitVisible = false;
+                                       return;
+                                   }
+                                   if (task.Status == TaskStatus.RanToCompletion) {
+                                       Task.Run(() => {
+                                           var tz = task.Result.Content.ReadAsStringAsync();
+                                           tz.Wait();
+                                           string res = tz.Result;
+                                           if (task.Result.StatusCode != HttpStatusCode.OK){
+                                               string err = "Произошла на сервере. Код: " +
+                                                                     task.Result.StatusCode.ToString() + " Ответ :" + res.ToString();
+                                                DisplayDownText = err;
+                                               Utils.pushCrashLog(new Exception(err));
+                                               WaitVMM.WaitVisible = false;
+                                               return;
+                                           }
+                                           if (string.IsNullOrWhiteSpace(res))
+                                           {
+                                               Utils.MsgBoxInfo("Не найдено ни одного объекта");
+                                               WaitVMM.WaitVisible = false;
+                                               return;
+                                           }
+                                          
+                                           Window.Dispatcher.Invoke(new Action(() => {
+                                               try{
+                                                    resultArr.AddRange(Utils.ParseObjects(res));
+                                                }
+                                               catch(Exception ex)
+                                               {
+                                                   DisplayDownText = "Произошла ошибка при обработке запроса  " + ex.Message;
+                                                   Utils.pushCrashLog(ex);
+                                               }
+                                           }));
+
+                                           Window.Dispatcher.Invoke(DispatcherPriority.Normal, new Action(() => {
+                                               WaitVMM.WaitVisible = false;
+                                               if (cancelToken.IsCancellationRequested)
+                                                   return;
+                                               LayerData ld = new LayerData();
+                                               ld.DisplayName = "Слой " + (LayerIndexCreate++);
+                                               foreach (var a in resultArr)
+                                                   ld.Objects.Add(a);
+                                               Layers.Add(ld);
+
+                                               /*AddressesResults.Clear();
+                                               foreach (var a in resultArr)
+                                                   AddressesResults.Add(a);*/
+                                           }));
+                                       });
+                                   }
+                                   else {
+                                       if (task.Exception != null)
+                                           DisplayDownText = "Произошла ошибка запроса " +
+                                                             task.Exception.GetBaseException().Message;
+                                       else
+                                           DisplayDownText = "Произошла ошибка запроса!";
+                                       WaitVMM.WaitVisible = false;
+                                   }
+                               });
+                           }
+                       }));
+            }
+        }
+        /* public RelayCommand SelectFromDicts
         {
             get
             {
@@ -329,20 +440,19 @@ namespace OsmMapViewer.ViewModel
                                                        String.Format("{0}{1}?osm_ids={2}&format=json&accept-language=ru&polygon_geojson=1&extratags=1", Config.NOMINATIM_HOST, Config.NOMINATIM_LOOKUP, osm_ids_req));
                                                    Window.Dispatcher.Invoke(new Action(() => {
                                                        try{
-                                                        resultArr.AddRange(Utils.ParseObjects(stringRes));
-
+                                                            resultArr.AddRange(Utils.ParseObjects(stringRes));
                                                         }
                                                        catch(Exception ex)
                                                        {
-                                                           DisplayDownText = "Произошла ошибка при запросе на Nominatim. " + ex.Message;
+                                                           DisplayDownText = "Произошла ошибка при обработке запроса Nominatim. " + ex.Message;
                                                            Utils.pushCrashLog(ex);
                                                        }
                                                    }));
                                                }
-                                               catch (Exception e)
-                                               {
-                                                   Console.WriteLine(e);
+                                               catch (Exception e) {
+                                                   DisplayDownText = "Произошла ошибка при запросе на Nominatim. " + e.Message;
                                                    Utils.pushCrashLog(e);
+                                                   WaitVMM.WaitVisible = false;
                                                    //throw e;
                                                    return;
                                                }
@@ -370,7 +480,7 @@ namespace OsmMapViewer.ViewModel
                            }
                        }));
             }
-        }
+        }*/
         private RelayCommand searchBtn;
         public RelayCommand SearchBtn
         {
@@ -424,6 +534,18 @@ namespace OsmMapViewer.ViewModel
                        (clearResults = new RelayCommand(obj =>
                        {
                            AddressesResults.Clear();
+                       }));
+            }
+        }
+        private RelayCommand deleteLayer;
+        public RelayCommand DeleteLayer
+        {
+            get
+            {
+                return deleteLayer ??
+                       (deleteLayer = new RelayCommand(obj =>
+                       {
+                           Layers.Remove((LayerData) obj);
                        }));
             }
         }

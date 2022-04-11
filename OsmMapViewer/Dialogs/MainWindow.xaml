@@ -167,7 +167,7 @@
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
                                         <Border BorderBrush="#FF0170BB" BorderThickness="0 0 0 1" Padding="0 0 0 15">
-                                            <TextBlock HorizontalAlignment="Left" FontSize="13" Text="{Binding DisplayName}" TextWrapping="Wrap" Foreground="#FF0170BB" ></TextBlock>
+                                            <TextBlock HorizontalAlignment="Left" FontSize="13" Text="{Binding DisplayNameLabel}" TextWrapping="Wrap" Foreground="#FF0170BB" ></TextBlock>
                                         </Border>
                                     </DataTemplate>
                                 </ListBox.ItemTemplate>
@@ -178,11 +178,7 @@
                 </dx:DXTabItem>
                 <dx:DXTabItem Header="Слои">
                     <Grid Background="Transparent" Margin="0" HorizontalAlignment="Stretch">
-                        <ListBox  Padding="0" Margin="0" Grid.Column="1"  HorizontalAlignment="Stretch"  ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-                            <ListBox.Items>
-                                <MenuItem></MenuItem>
-                                <MenuItem></MenuItem>
-                            </ListBox.Items>
+                        <ListBox  ItemsSource="{Binding Layers}" Padding="0" Margin="0" Grid.Column="1"  HorizontalAlignment="Stretch"  ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                             <ListBox.ItemContainerStyle>
                                 <Style TargetType="ListBoxItem">
                                     <Setter Property="HorizontalContentAlignment" Value="Stretch"></Setter>
@@ -216,7 +212,7 @@
                                                             </Style>
                                                         </Button.Style>
                                                     </Button>
-                                                    <Button Height="30" Background="Transparent" BorderBrush="Transparent" Cursor="Hand"  ToolTip="Скрыть\показать слой">
+                                                    <Button Height="30" Command="{Binding Hide}" Background="Transparent" BorderBrush="Transparent" Cursor="Hand"  ToolTip="Скрыть\показать слой" >
                                                         <Button.Style>
                                                             <Style TargetType="Button">
                                                                 <Style.Setters>
@@ -259,7 +255,7 @@
                                                             </Style>
                                                         </Button.Style>
                                                     </Button>
-                                                    <Button Height="30" Background="Transparent" BorderBrush="Transparent" Cursor="Hand"  ToolTip="Удалить слой">
+                                                    <Button CommandParameter="{Binding}" Command="{Binding  Path=DataContext.DeleteLayer, RelativeSource={RelativeSource AncestorType={x:Type dx:ThemedWindow},Mode=FindAncestor}}" Height="30" Background="Transparent" BorderBrush="Transparent" Cursor="Hand"  ToolTip="Удалить слой">
                                                         <Button.Style>
                                                             <Style TargetType="Button">
                                                                 <Style.Setters>
@@ -276,7 +272,7 @@
                                                     </Button>
                                                 </StackPanel>
                                             </Border>
-                                            <TextBlock FontSize="14"  HorizontalAlignment="Stretch" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Padding="5 " Grid.Row="1" Text="{Binding Name}"></TextBlock>
+                                            <TextBlock FontSize="14"  HorizontalAlignment="Stretch" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Padding="5 " Grid.Row="1" Text="{Binding DisplayName}"></TextBlock>
                                         </Grid>
                                     </Border>
                                 </DataTemplate>

@@ -34,29 +34,11 @@ namespace OsmMapViewer
             DataContext = new MainWindowViewModel(this);
 
             this.Loaded += MainWindow_Loaded;
-            VectorLayer vl = new VectorLayer();
-            var mp = new MapPolygon();
-            foreach (var g in new GeoPoint[]{
-                new GeoPoint(47.000751662342765, 28.782015716126669),
-                new GeoPoint(47.003499105949331, 28.779784489235578),
-                new GeoPoint(47.005060446204077, 28.776670571833844),
-                new GeoPoint(47.002626050570065, 28.774355254904908),
-                new GeoPoint(47.000264065129222, 28.779487220183803),
-                new GeoPoint(47.000751662342765, 28.782015716126669)
-            })
-                mp.Points.Add(g);
 
-            mp.SelectedFill = new SolidColorBrush(Color.FromArgb(100, 255, 0, 0));
-            var z = new MapItemStorage();
-            //z.Items.Add(mp);
-            vl.Data = z;
 
-            mapControl.Layers.Add(vl);
         }
 
-        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
-        {
-
+        private void MainWindow_Loaded(object sender, RoutedEventArgs e) {
             mapControl.MinZoomLevel = 1;
             mapControl.MaxZoomLevel = 18;
             mapControl.ShowSearchPanel = true;
@@ -73,29 +55,17 @@ namespace OsmMapViewer
             {
                 Visible = false
             };
-            
-            
-            
             var layer = new ImageLayer();
             mapControl.Layers.Insert(0,layer);
-            
-
             OpenStreetMapDataProvider provider = new OpenStreetMapDataProvider();
             layer.DataProvider = provider;
 
-            
-            
-            
-
-
-            //provider.TileUriTemplate = "http://10.113.0.183/{1}/{2}/{3}.png";
-            provider.TileUriTemplate = "https://tile.openstreetmap.org/{tileLevel}/{tileX}/{tileY}.png";
+            provider.TileUriTemplate = Config.TILE_SERVER_TEMPLATE;
             provider.WebRequest += Provider_WebRequest;
 
             mapControl.ZoomLevel = 16;
             mapControl.CenterPoint = new GeoPoint( 48.5684458000654, 39.3150812432244);
             mapControl.MouseLeftButtonUp += MapControl_MouseLeftButtonUp;
-
             
         }
 

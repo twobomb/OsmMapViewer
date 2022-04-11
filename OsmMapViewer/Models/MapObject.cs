@@ -1,18 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Media;
 using DevExpress.Map;
 using DevExpress.Map.Native;
 using DevExpress.Xpf.Map;
+using OsmMapViewer.Annotations;
 
 namespace OsmMapViewer.Models
 {
 
     //https://nominatim.openstreetmap.org/lookup?osm_ids=N4692746907&format=xml&addressdetails=1&extratags=1&accept-language=ru&polygon_geojson=1
-    public class MapObject {
+    public class MapObject: INotifyPropertyChanged {
         public enum OsmTypes {
             Way,
             Node,
@@ -31,6 +34,16 @@ namespace OsmMapViewer.Models
         public string Type { get; set; }
         public string Class { get; set; }
         public string DisplayName { get; set; }
+
+        public string DisplayNameLabel
+        {
+            get {
+                if (string.IsNullOrWhiteSpace(DisplayName))
+                    return "{БЕЗ НАЗВАНИЯ}";
+                return DisplayName;
+            }
+        }
+
         public string Icon { get; set; }
         public GeoPoint CenterPoint { get; set; } 
         public GeoPoint BBoxLt { get; set; } 
@@ -41,7 +54,17 @@ namespace OsmMapViewer.Models
         public List<TagValue> Tags { get; set; } = new List<TagValue>();
         public override string ToString()
         {
+            if (string.IsNullOrWhiteSpace(DisplayName))
+                return "{БЕЗ НАЗВАНИЯ}";
             return DisplayName;
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        [NotifyPropertyChangedInvocator]
+        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));  
         }
     }
 }

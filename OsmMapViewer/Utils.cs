@@ -230,16 +230,18 @@ namespace OsmMapViewer
                 foreach (var item in arr)
                 {
                     MapObject mo = new MapObject() {
-                        CenterPoint = new GeoPoint(double.Parse(item.lat.ToString(),CultureInfo.InvariantCulture), double.Parse(item.lon.ToString(), CultureInfo.InvariantCulture)),
+                        CenterPoint = new GeoPoint(Utils.ParseDouble(item.lat.ToString()), Utils.ParseDouble(item.lon.ToString())),
                         DisplayName = item.display_name,
                         Class = item["class"],
                         Type = item.osm_type,
                         OsmId = item.osm_id,
                         PlaceId = item.place_id,
                         Icon = item.icon,
-                        BBoxLt = new GeoPoint(double.Parse(item.boundingbox[0].ToString(), CultureInfo.InvariantCulture), double.Parse(item.boundingbox[2].ToString(), CultureInfo.InvariantCulture)),
-                        BBoxRb= new GeoPoint(double.Parse(item.boundingbox[1].ToString(), CultureInfo.InvariantCulture), double.Parse(item.boundingbox[3].ToString(), CultureInfo.InvariantCulture)),
+                        BBoxLt = new GeoPoint(Utils.ParseDouble(item.boundingbox[0].ToString()), Utils.ParseDouble(item.boundingbox[2].ToString())),
+                        BBoxRb= new GeoPoint(Utils.ParseDouble(item.boundingbox[1].ToString()), Utils.ParseDouble(item.boundingbox[3].ToString())),
                     };
+                    
+
                 mo.Tags.Add(new TagValue() { Tag = "osm_id", Key = mo.OsmId });
                 if (item.extratags != null)
                         foreach (var v in item.extratags)
@@ -303,8 +305,7 @@ namespace OsmMapViewer
                             }
                             mo.Geometry = new MapPath() { Data = mapPath };
                         }
-                        else
-                        {
+                        else{
                             Utils.pushCrashLog(new Exception("Не удалось распознать тип " +
                                                              item.geojson.type.ToString() + "  \r\n" + json));
                             MessageBox.Show("Не удалось распознать тип " + item.geojson.type.ToString() +

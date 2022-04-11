@@ -24,7 +24,7 @@ if(!isset($_GET["point"]) || $_GET["point"] == "1")
 	$tables["planet_osm_point"] =[];
 
 foreach ($tables as $key=>$v){
-	$query = "SELECT column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = '$key' AND table_catalog = 'gis'";
+	$query = "SELECT column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = '$key' AND table_catalog = '$DB_NAME'";
 	$result = pg_query($query) or die('Query failed: ' . pg_last_error());
 	while ($line = pg_fetch_array($result, null, PGSQL_ASSOC)) 
 		if(!in_array($line["column_name"],["way","tags"]))
