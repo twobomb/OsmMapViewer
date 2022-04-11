@@ -1,0 +1,106 @@
+﻿<dx:ThemedWindow
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:dx="http://schemas.devexpress.com/winfx/2008/xaml/core"  
+    xmlns:vm="clr-namespace:OsmMapViewer.ViewModel"
+    xmlns:wpfTextBoxAutoComplete="clr-namespace:WPFTextBoxAutoComplete;assembly=WPFTextBoxAutoComplete"
+    xmlns:models="clr-namespace:OsmMapViewer.Models"
+    xmlns:converter="clr-namespace:OsmMapViewer.Converter"
+    xmlns:dxr="http://schemas.devexpress.com/winfx/2008/xaml/ribbon" xmlns:dxb="http://schemas.devexpress.com/winfx/2008/xaml/bars"
+    x:Class="OsmMapViewer.AddUserTags"
+    Title="Ввести свои теги" Height="800" Width="1000" ShowBackButton="False"  
+    >
+    <dx:ThemedWindow.Resources>
+        <converter:FilterAutocompleteConverter x:Key="filterAutocompleteConverter"/>
+    </dx:ThemedWindow.Resources>
+    <dx:ThemedWindow.DataContext>
+        <vm:AddUserTagsViewModel x:Name="WND_ViewModel"/>
+    </dx:ThemedWindow.DataContext>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <dxr:RibbonControl Grid.Row="0" RibbonStyle="Office2019" ShowApplicationButton="False">
+            <dxr:RibbonDefaultPageCategory Caption="Default Category">
+                <dxr:RibbonPage Caption="Основное">
+                    <dxr:RibbonPageGroup Caption="Управление тегами">
+                        <dxb:BarButtonItem Command="{Binding AddTag}" Content="Добавить тег" RibbonStyle="Large" LargeGlyph="{dx:DXImage SvgImages/Icon Builder/Actions_AddCircled.svg}"/>
+                        <dxb:BarButtonItem Command="{Binding RemoveAllTags}" Content="Очистить все теги" RibbonStyle="Large" LargeGlyph="{dx:DXImage SvgImages/Snap/ClearTableStyle.svg}"/>
+
+                    </dxr:RibbonPageGroup>
+                    <dxr:RibbonPageGroup Caption="Завершение">
+                        <dxb:BarButtonItem ItemClick="BarItem_OnItemClick" Content="Применить и закрыть" RibbonStyle="Large" LargeGlyph="{dx:DXImage SvgImages/Content/CheckBox.svg}"/>
+                        <dxb:BarButtonItem ItemClick="BarItem_OnItemClick1" Content="Отменить и закрыть" RibbonStyle="Large" LargeGlyph="{dx:DXImage SvgImages/RichEdit/CloseHeaderAndFooter.svg}"/>
+                    </dxr:RibbonPageGroup>
+                </dxr:RibbonPage>
+            </dxr:RibbonDefaultPageCategory>
+        </dxr:RibbonControl>
+        <ListBox  Grid.Row="1" HorizontalAlignment="Stretch" ItemsSource="{Binding Items}">
+            <ListBox.ItemContainerStyle>
+                <Style TargetType="{x:Type ListBoxItem}">
+                    <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                    <Setter Property="Background" Value="Transparent"/>
+                    <Setter Property="BorderBrush" Value="Transparent"/>
+                    <Style.Triggers>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter Property="Background" Value="Transparent"/>
+                            <Setter Property="BorderBrush" Value="Transparent"/>
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="Transparent"/>
+                            <Setter Property="BorderBrush" Value="Transparent"/>
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </ListBox.ItemContainerStyle>
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Orientation="Horizontal" Margin="20 15 0 0" HorizontalAlignment="Stretch">
+                        <TextBox 
+                            Width="250"
+                            FontSize="18"
+                            HorizontalAlignment="Center"
+                            Text="{Binding Tag, UpdateSourceTrigger=PropertyChanged}" 
+                            wpfTextBoxAutoComplete:AutoCompleteBehavior.AutoCompleteItemsSource="{Binding DataContext.TagsAutocomplete, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type dx:ThemedWindow}}}" 
+                            wpfTextBoxAutoComplete:AutoCompleteBehavior.AutoCompleteStringComparison="InvariantCultureIgnoreCase"
+                        />
+                        <TextBlock Text="=" FontSize="18" FontWeight="Black" Margin="15  0"/>
+                        <TextBox 
+                            Width="250"
+                            FontSize="18"
+                            HorizontalAlignment="Center"
+                            Text="{Binding Key, UpdateSourceTrigger=PropertyChanged}" 
+                            wpfTextBoxAutoComplete:AutoCompleteBehavior.AutoCompleteStringComparison="InvariantCultureIgnoreCase"
+                        >
+                            <TextBox.Style>
+                                <Style TargetType="{x:Type TextBox}" >
+                                    <Setter Property="wpfTextBoxAutoComplete:AutoCompleteBehavior.AutoCompleteItemsSource">
+                                        <Setter.Value>
+                                            <MultiBinding  Converter="{StaticResource filterAutocompleteConverter}">
+                                                <Binding   RelativeSource="{RelativeSource FindAncestor, AncestorType={x:Type dx:ThemedWindow}}" Path="DataContext.autocomplete" />
+                                                <Binding RelativeSource="{RelativeSource Self}" Path="Parent.Children[0].Text" />
+                                            </MultiBinding>
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Parent.Children[0].Text, RelativeSource={RelativeSource Self}}" Value="">
+                                            <Setter Property="IsEnabled" Value="False"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBox.Style>
+                        </TextBox>
+                        <Button Height="25" VerticalAlignment="Center" Margin="10 0" BorderBrush="Transparent" Command="{Binding DataContext.RemoveTag, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type dx:ThemedWindow}}}" CommandParameter="{Binding }">
+                            <StackPanel Orientation="Horizontal">
+                                <Image Source="{dx:DXImage Image=Delete_32x32.png}" Stretch="Uniform"/>
+                            </StackPanel>
+                        </Button>
+</StackPanel>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+
+        </ListBox>
+    </Grid>
+</dx:ThemedWindow>
