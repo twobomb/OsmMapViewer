@@ -69,8 +69,7 @@ namespace OsmMapViewer
             
         }
 
-        private void MapControl_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
-        {
+        private void MapControl_MouseLeftButtonUp(object sender, MouseButtonEventArgs e){
 
             CoordPoint t = mapControl.ScreenPointToCoordPoint(e.GetPosition(mapControl));
             Console.WriteLine(t.GetX() + " " + t.GetY());
@@ -85,5 +84,12 @@ namespace OsmMapViewer
             e.UserAgent = "com.mycompany.myapp";
         }
 
+        //Автоподгрузка элементов по скроллу 
+        private void lb_layerItemsBox_ScrollChanged(object sender, ScrollChangedEventArgs e){
+            int myOffset = 5;
+            if(e.VerticalOffset + e.ViewportHeight >= e.ExtentHeight - myOffset){
+                (DataContext as MainWindowViewModel).ShowMoreSelectedLayerList();
+            }
+        }
     }
 }

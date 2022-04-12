@@ -50,7 +50,16 @@ namespace OsmMapViewer.Models
         public GeoPoint BBoxRb { get; set; }
 
         public string GeometryType { get; set; }
-        public MapItem Geometry { get; set; }        
+        private MapItem geometry = null;
+        public MapItem Geometry { 
+            get
+            {
+                if (geometry == null && !string.IsNullOrEmpty(RawGeoJson))
+                    geometry = Utils.MapItemFromGeoJson(RawGeoJson);
+                return geometry;
+            }
+        }        
+        public string RawGeoJson { get; set; }        
         public List<TagValue> Tags { get; set; } = new List<TagValue>();
         public override string ToString()
         {

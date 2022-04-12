@@ -1,4 +1,5 @@
-﻿<dx:ThemedWindow xmlns:dxm="http://schemas.devexpress.com/winfx/2008/xaml/map" 
+﻿<dx:ThemedWindow    
+                    xmlns:dxm="http://schemas.devexpress.com/winfx/2008/xaml/map" 
                      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                      xmlns:dx="http://schemas.devexpress.com/winfx/2008/xaml/core"
@@ -8,6 +9,7 @@
                      xmlns:designTime="http://schemas.microsoft.com/expression/blend/2008"
                      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                      mc:Ignorable="designTime"
+    
                      designTime:DataContext="{designTime:DesignInstance Type=viewModel:MainWindowViewModel}"
                      xmlns:dxg="http://schemas.devexpress.com/winfx/2008/xaml/grid"
                      xmlns:system="clr-namespace:System;assembly=mscorlib"
@@ -88,7 +90,19 @@
                         <dxb:BarCheckItem Content="Полигоны" RibbonStyle="Large" IsChecked="{Binding IsPolygonChecked}" GroupIndex="-1" LargeGlyph="{dx:DXImage SvgImages/Chart/ChartType_PolarArea.svg}"/>
                         <dxb:BarCheckItem Content="Точки" GroupIndex="-1" RibbonStyle="Large" LargeGlyph="{dx:DXImage SvgImages/Chart/ChartType_Point3D.svg}" IsChecked="{Binding IsPointChecked}"/>
                     </dxr:RibbonPageGroup>
-                    <dxr:RibbonPageGroup Caption="Подробности"/>
+                    <dxr:RibbonPageGroup Caption="Тип поиска">
+                        <dxb:BarCheckItem Content="Быстрый поиск" GroupIndex="22" IsChecked="True" Glyph="{dx:DXImage SvgImages/Dashboards/ChartArguments.svg}"/>
+                        <dxb:BarCheckItem Content="Поиск с подробностями" GroupIndex="22" IsChecked="{Binding IsDetailSearch}" Glyph="{dx:DXImage SvgImages/Dashboards/ChartPoints.svg}"/>
+                    </dxr:RibbonPageGroup>
+                    <dxr:RibbonPageGroup Caption="Настройки нового слоя">
+                        <dxb:BarCheckItem IsChecked="{Binding IsShowPushpin}" Content="Показывать метки" Glyph="{dx:DXImage SvgImages/Outlook Inspired/MapIt.svg}"/>
+                        <dxb:BarCheckItem IsChecked="{Binding IsShowGeometry}" Content="Показывать геометрии" Glyph="{dx:DXImage SvgImages/Dashboards/ShapeLabels.svg}"/>
+                        <dxb:BarEditItem Content="Имя слоя" RibbonStyle="Default" EditWidth="100" EditValue="{Binding LayerNewName}">
+                            <dxb:BarEditItem.EditSettings>
+                                <dxe:TextEditSettings/>
+                            </dxb:BarEditItem.EditSettings>
+                        </dxb:BarEditItem>
+                    </dxr:RibbonPageGroup>
                 </dxr:RibbonPage>
 
                 <dxr:RibbonPage  Caption="Категории">
@@ -96,7 +110,9 @@
                         <dxb:BarButtonItem Command ="{Binding SelectFromDicts}" Content="Выбрать из справочника тегов" RibbonStyle="Large" LargeGlyph="{dx:DXImage SvgImages/Dashboards/ShowLegend.svg}"/>
                         <dxb:BarButtonItem Content="Ручной ввод тегов" RibbonStyle="Large" LargeGlyph="{dx:DXImage SvgImages/Business Objects/BO_Price_Item.svg}"/>
                     </dxr:RibbonPageGroup>
-                    <dxr:RibbonPageGroup Caption="Ribbon Page Group"/>
+                    <dxr:RibbonPageGroup Caption="Ribbon Page Group">
+                        <dxb:BarButtonItem Command="{Binding Religion}" Content="Религиозные" Glyph="{dx:DXImage SvgImages/Scheduling/GoToToday.svg}"/>
+                    </dxr:RibbonPageGroup>
                 </dxr:RibbonPage>
             </dxr:RibbonPageCategory>
         </dxr:RibbonControl>
@@ -113,7 +129,7 @@
             </Grid.RowDefinitions>
             <dxm:MapControl Grid.RowSpan="3" x:Name="mapControl" HorizontalAlignment="Stretch" >
             </dxm:MapControl>
-            <dx:DXTabControl Grid.Column="1" Padding="0 10 0 0">
+            <dx:DXTabControl Grid.Column="1" Padding="0 10 0 0" SelectedIndex="{Binding SelectedTabIndex}">
                 <dx:DXTabControl.View>
                     <dx:TabControlScrollView AllowAnimation="True"/>
                 </dx:DXTabControl.View>
@@ -157,11 +173,46 @@
                             </dxe:HyperlinkEdit.Style>
 
                         </dxe:HyperlinkEdit>
-                        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalAlignment="Stretch"  HorizontalContentAlignment="Stretch">
-                            <ListBox SelectedItem="{Binding SelectedAddress}" x:Name="lb_searchBox" HorizontalAlignment="Stretch"  ItemsSource="{Binding AddressesResults}" HorizontalContentAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox Grid.Row="2" SelectedItem="{Binding SelectedAddress}" x:Name="lb_searchBox" HorizontalAlignment="Stretch"  ItemsSource="{Binding AddressesResults}" HorizontalContentAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem">
+                                    <Setter Property="HorizontalContentAlignment" Value="Stretch"></Setter>
+                                </Style>
+                            </ListBox.ItemContainerStyle>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Border BorderBrush="#FF0170BB" BorderThickness="0 0 0 1" Padding="0 0 0 15">
+                                        <TextBlock HorizontalAlignment="Left" FontSize="13" Text="{Binding DisplayNameLabel}" TextWrapping="Wrap" Foreground="#FF0170BB" ></TextBlock>
+                                    </Border>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+
+                    </Grid>
+                </dx:DXTabItem>
+                <dx:DXTabItem Header="Слои">
+                    <Grid Background="Transparent" Margin="0" HorizontalAlignment="Stretch">
+                        <Grid x:Name="grid_detail_layer" >
+                            <Grid.Style>
+                                <Style TargetType="Grid">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsShowLayerObjectList}" Value="False">
+                                            <Setter Property="Visibility" Value="Collapsed"></Setter>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Grid.Style>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"></RowDefinition>
+                                <RowDefinition Height="Auto"></RowDefinition>
+                                <RowDefinition Height="*"></RowDefinition>
+                            </Grid.RowDefinitions>
+                            <dx:SimpleButton Command="{Binding ShowHideLayersList}"  Margin="5" Padding="0 0" HorizontalAlignment="Stretch" Grid.Column="1" Height="30"  Content="Вернуться к просмотру слоёв" GlyphAlignment="Left" GlyphToContentOffset="10" FontSize="14"  GlyphHeight="20" Glyph="{dx:DXImage SvgImages/Navigation/Backward.svg}" ></dx:SimpleButton>
+                            <TextBlock FontSize="14" Grid.Row="1" Text="{Binding ShowLayerObjectsShown}" HorizontalAlignment="Right"></TextBlock>
+                            <ListBox SelectedItem="{Binding SelectedLayerObject}" ScrollViewer.ScrollChanged="lb_layerItemsBox_ScrollChanged" Grid.Row="2" x:Name="lb_layerItemsBox" HorizontalAlignment="Stretch"  ItemsSource="{Binding SelectedLayerList}" HorizontalContentAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                                 <ListBox.ItemContainerStyle>
                                     <Style TargetType="ListBoxItem">
-                                        <Setter Property="HorizontalContentAlignment" Value="Stretch">  </Setter>
+                                        <Setter Property="HorizontalContentAlignment" Value="Stretch"></Setter>
                                     </Style>
                                 </ListBox.ItemContainerStyle>
                                 <ListBox.ItemTemplate>
@@ -172,13 +223,17 @@
                                     </DataTemplate>
                                 </ListBox.ItemTemplate>
                             </ListBox>
-                        </ScrollViewer>
-                        
-                    </Grid>
-                </dx:DXTabItem>
-                <dx:DXTabItem Header="Слои">
-                    <Grid Background="Transparent" Margin="0" HorizontalAlignment="Stretch">
-                        <ListBox  ItemsSource="{Binding Layers}" Padding="0" Margin="0" Grid.Column="1"  HorizontalAlignment="Stretch"  ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        </Grid>
+                        <ListBox SelectedItem="{Binding SelectedLayer}"  ItemsSource="{Binding Layers}" Padding="0"  HorizontalAlignment="Stretch"  ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                            <ListBox.Style>
+                                <Style TargetType="ListBox">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsShowLayerObjectList}" Value="True">
+                                            <Setter Property="Visibility" Value="Collapsed"></Setter>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ListBox.Style>
                             <ListBox.ItemContainerStyle>
                                 <Style TargetType="ListBoxItem">
                                     <Setter Property="HorizontalContentAlignment" Value="Stretch"></Setter>
@@ -187,7 +242,7 @@
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
                                     <Border BorderBrush="#FF515151" BorderThickness="2">
-                                        <Grid Background="#FFFFF4C1" HorizontalAlignment="Stretch" Margin="0" >
+                                        <Grid Background="#FFFFF7C4" HorizontalAlignment="Stretch" Margin="0" >
                                             <Grid.RowDefinitions>
                                                 <RowDefinition Height="Auto"></RowDefinition>
                                                 <RowDefinition Height="Auto"></RowDefinition>
@@ -196,83 +251,121 @@
                                                 <ColumnDefinition Width="*"></ColumnDefinition>
                                             </Grid.ColumnDefinitions>
                                             <Border BorderThickness="0 0 0 1" BorderBrush="#FFCFC28A">
-                                                <StackPanel Orientation="Horizontal">
-                                                    <Button Height="30" Background="Transparent" BorderBrush="Transparent" Cursor="Hand"  ToolTip="Выбрать слой">
-                                                        <Button.Style>
-                                                            <Style TargetType="Button">
-                                                                <Style.Setters>
-                                                                    <Setter Property="ContentTemplate" >
-                                                                        <Setter.Value>
-                                                                            <DataTemplate>
-                                                                                <Image Source="{dx:DXImage 'Images/Actions/SelectAll2_32x32.png'}" Stretch="UniformToFill"/>
-                                                                            </DataTemplate>
-                                                                        </Setter.Value>
-                                                                    </Setter>
-                                                                </Style.Setters>
-                                                            </Style>
-                                                        </Button.Style>
-                                                    </Button>
-                                                    <Button Height="30" Command="{Binding Hide}" Background="Transparent" BorderBrush="Transparent" Cursor="Hand"  ToolTip="Скрыть\показать слой" >
-                                                        <Button.Style>
-                                                            <Style TargetType="Button">
-                                                                <Style.Setters>
-                                                                    <Setter Property="ContentTemplate" >
-                                                                        <Setter.Value>
-                                                                            <DataTemplate>
-                                                                                <Image Source="{dx:DXImage 'Images/XAF/State_ItemVisibility_Show.png'}" Stretch="UniformToFill"/>
-                                                                            </DataTemplate>
-                                                                        </Setter.Value>
-                                                                    </Setter>
-                                                                </Style.Setters>
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding Visible}" Value="False">
-                                                                        <DataTrigger.Setters>
-                                                                            <Setter Property="ContentTemplate" >
-                                                                                <Setter.Value>
-                                                                                    <DataTemplate>
-                                                                                        <Image Source="{dx:DXImage 'Images/XAF/State_ItemVisibility_Hide.png'}" Stretch="UniformToFill"/>
-                                                                                    </DataTemplate>
-                                                                                </Setter.Value>
-                                                                            </Setter>
-                                                                        </DataTrigger.Setters>
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </Button.Style>
-                                                    </Button>
-                                                    <Button Height="30" Background="Transparent" BorderBrush="Transparent" Cursor="Hand" ToolTip="Переименовать слой">
-                                                        <Button.Style>
-                                                            <Style TargetType="Button">
-                                                                <Style.Setters>
-                                                                    <Setter Property="ContentTemplate" >
-                                                                        <Setter.Value>
-                                                                            <DataTemplate>
-                                                                                <Image Source="{dx:DXImage 'Images/Actions/EditName_32x32.png'}" Stretch="UniformToFill"/>
-                                                                            </DataTemplate>
-                                                                        </Setter.Value>
-                                                                    </Setter>
-                                                                </Style.Setters>
-                                                            </Style>
-                                                        </Button.Style>
-                                                    </Button>
-                                                    <Button CommandParameter="{Binding}" Command="{Binding  Path=DataContext.DeleteLayer, RelativeSource={RelativeSource AncestorType={x:Type dx:ThemedWindow},Mode=FindAncestor}}" Height="30" Background="Transparent" BorderBrush="Transparent" Cursor="Hand"  ToolTip="Удалить слой">
-                                                        <Button.Style>
-                                                            <Style TargetType="Button">
-                                                                <Style.Setters>
-                                                                    <Setter Property="ContentTemplate" >
-                                                                        <Setter.Value>
-                                                                            <DataTemplate>
-                                                                                <Image Source="{dx:DXImage 'Images/Edit/Delete_32x32.png'}" Stretch="UniformToFill"/>
-                                                                            </DataTemplate>
-                                                                        </Setter.Value>
-                                                                    </Setter>
-                                                                </Style.Setters>
-                                                            </Style>
-                                                        </Button.Style>
-                                                    </Button>
-                                                </StackPanel>
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto"></ColumnDefinition>
+                                                        <ColumnDefinition Width="*"></ColumnDefinition>
+                                                    </Grid.ColumnDefinitions>
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <Button Height="30" Background="Transparent" CommandParameter="{Binding}" Command="{Binding  Path=DataContext.ShowHideLayersList, RelativeSource={RelativeSource AncestorType={x:Type dx:ThemedWindow},Mode=FindAncestor}}"  BorderBrush="Transparent" Cursor="Hand"  ToolTip="Выбрать слой">
+                                                            <Button.Style>
+                                                                <Style TargetType="Button">
+                                                                    <Style.Setters>
+                                                                        <Setter Property="ContentTemplate" >
+                                                                            <Setter.Value>
+                                                                                <DataTemplate>
+                                                                                    <Image Source="{dx:DXImage 'Images/Actions/SelectAll2_32x32.png'}" Stretch="UniformToFill"/>
+                                                                                </DataTemplate>
+                                                                            </Setter.Value>
+                                                                        </Setter>
+                                                                    </Style.Setters>
+                                                                </Style>
+                                                            </Button.Style>
+                                                        </Button>
+                                                        <Button Height="30" Command="{Binding Hide}" Background="Transparent" BorderBrush="Transparent" Cursor="Hand"  ToolTip="Скрыть\показать слой" >
+                                                            <Button.Style>
+                                                                <Style TargetType="Button">
+                                                                    <Style.Setters>
+                                                                        <Setter Property="ContentTemplate" >
+                                                                            <Setter.Value>
+                                                                                <DataTemplate>
+                                                                                    <Image Source="{dx:DXImage 'Images/XAF/State_ItemVisibility_Show.png'}" Stretch="UniformToFill"/>
+                                                                                </DataTemplate>
+                                                                            </Setter.Value>
+                                                                        </Setter>
+                                                                    </Style.Setters>
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding Visible}" Value="False">
+                                                                            <DataTrigger.Setters>
+                                                                                <Setter Property="ContentTemplate" >
+                                                                                    <Setter.Value>
+                                                                                        <DataTemplate>
+                                                                                            <Image Source="{dx:DXImage 'Images/XAF/State_ItemVisibility_Hide.png'}" Stretch="UniformToFill"/>
+                                                                                        </DataTemplate>
+                                                                                    </Setter.Value>
+                                                                                </Setter>
+                                                                            </DataTrigger.Setters>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Button.Style>
+                                                        </Button>
+                                                        <Button Height="30" Background="Transparent" BorderBrush="Transparent" Cursor="Hand" ToolTip="Переименовать слой">
+                                                            <Button.Style>
+                                                                <Style TargetType="Button">
+                                                                    <Style.Setters>
+                                                                        <Setter Property="ContentTemplate" >
+                                                                            <Setter.Value>
+                                                                                <DataTemplate>
+                                                                                    <Image Source="{dx:DXImage 'Images/Actions/EditName_32x32.png'}" Stretch="UniformToFill"/>
+                                                                                </DataTemplate>
+                                                                            </Setter.Value>
+                                                                        </Setter>
+                                                                    </Style.Setters>
+                                                                </Style>
+                                                            </Button.Style>
+                                                        </Button>
+                                                        <Button CommandParameter="{Binding}" Command="{Binding  Path=DataContext.DeleteLayer, RelativeSource={RelativeSource AncestorType={x:Type dx:ThemedWindow},Mode=FindAncestor}}" Height="30" Background="Transparent" BorderBrush="Transparent" Cursor="Hand"  ToolTip="Удалить слой">
+                                                            <Button.Style>
+                                                                <Style TargetType="Button">
+                                                                    <Style.Setters>
+                                                                        <Setter Property="ContentTemplate" >
+                                                                            <Setter.Value>
+                                                                                <DataTemplate>
+                                                                                    <Image Source="{dx:DXImage 'Images/Edit/Delete_32x32.png'}" Stretch="UniformToFill"/>
+                                                                                </DataTemplate>
+                                                                            </Setter.Value>
+                                                                        </Setter>
+                                                                    </Style.Setters>
+                                                                </Style>
+                                                            </Button.Style>
+                                                        </Button>
+                                                    </StackPanel>
+                                                    <StackPanel Orientation="Vertical" Grid.Column="1" HorizontalAlignment="Right">
+                                                        <dx:SimpleButton ButtonKind="Toggle" IsChecked="{Binding IsShowPushpin}" Height="25" Glyph="{dx:DXImage 'SvgImages/Icon Builder/Travel_MapPointer.svg'}" ToolTip="Отображать метки слоя на карте" >
+                                                            <dx:SimpleButton.Style>
+                                                                <Style TargetType="dx:SimpleButton">
+                                                                    <Style.Setters>
+                                                                        <Setter Property="Background" Value="Transparent"></Setter>
+                                                                        <Setter Property="BorderBrush" Value="Transparent"></Setter>
+                                                                    </Style.Setters>
+                                                                    <Style.Triggers>
+                                                                        <Trigger Property="IsChecked" Value="False">
+                                                                            <Setter Property="Background" Value="#FFFFAAAA"></Setter>
+                                                                        </Trigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </dx:SimpleButton.Style>
+                                                        </dx:SimpleButton>
+                                                        <dx:SimpleButton ButtonKind="Toggle"  IsChecked="{Binding IsShowGeometry}" Height="25" Glyph="{dx:DXImage 'SvgImages/Dashboards/ShapeLabels.svg'}"  ToolTip="Отображать геометрии объектов слоя на карте">
+                                                            <dx:SimpleButton.Style>
+                                                                <Style TargetType="dx:SimpleButton">
+                                                                    <Style.Setters>
+                                                                        <Setter Property="Background" Value="Transparent"></Setter>
+                                                                        <Setter Property="BorderBrush" Value="Transparent"></Setter>
+                                                                    </Style.Setters>
+                                                                    <Style.Triggers>
+                                                                        <Trigger Property="IsChecked" Value="False">
+                                                                            <Setter Property="Background" Value="#FFFFAAAA"></Setter>
+                                                                        </Trigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </dx:SimpleButton.Style>
+                                                        </dx:SimpleButton>
+                                                    </StackPanel>
+                                                </Grid>                                                
                                             </Border>
-                                            <TextBlock FontSize="14"  HorizontalAlignment="Stretch" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Padding="5 " Grid.Row="1" Text="{Binding DisplayName}"></TextBlock>
+                                            <TextBlock FontSize="16" FontWeight="Bold"  HorizontalAlignment="Stretch" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Padding="5 " Grid.Row="1" Text="{Binding DisplayName}"></TextBlock>
                                         </Grid>
                                     </Border>
                                 </DataTemplate>
@@ -287,32 +380,44 @@
                 <Border.Style>
                     <Style TargetType="Border">
                         <Style.Triggers>
-                            <DataTrigger Binding="{Binding SelectedAddress}" Value="{x:Null}">
+                            <DataTrigger Binding="{Binding SelectedMapObject}" Value="{x:Null}">
                                 <Setter Property="Visibility" Value="Collapsed"></Setter>
                             </DataTrigger>
                         </Style.Triggers>
                     </Style>
                 </Border.Style>
-                <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="150" >
-                    <ScrollViewer.Style>
-                        <Style TargetType="ScrollViewer">
+                <Grid>
+                    <Grid.Style>
+                        <Style TargetType="Grid">
                             <Style.Triggers>
-                                <DataTrigger Binding="{Binding SelectedAddress.Tags.Count}" Value="0">
+                                <DataTrigger Binding="{Binding SelectedMapObject.Tags.Count}" Value="0">
                                     <Setter Property="Visibility" Value="Collapsed"></Setter>
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>
-                    </ScrollViewer.Style>
-                    <StackPanel Orientation="Vertical">
-                        <DataGrid CanUserAddRows="False" CanUserDeleteRows="False" IsReadOnly="True" FontSize="14" ItemsSource="{Binding SelectedAddress.Tags}" AutoGenerateColumns="False">
+                    </Grid.Style>
+                    <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"></RowDefinition>
+                            <RowDefinition Height="*"></RowDefinition>
+                        </Grid.RowDefinitions>
+                        <dx:SimpleButton IsChecked="{Binding IsTagsPanel}"  Margin="5" Padding="0 0" HorizontalAlignment="Stretch" Grid.Column="1" Height="30"  Content="Теги" GlyphAlignment="Right" GlyphToContentOffset="10" FontSize="14"  GlyphHeight="20" ButtonKind="Toggle" Glyph="{dx:DXImage SvgImages/Spreadsheet/SortFields.svg}" />
+                        <DataGrid Grid.Row="1" VerticalAlignment="Stretch" CanUserAddRows="False" CanUserDeleteRows="False" IsReadOnly="True" FontSize="14" ItemsSource="{Binding SelectedMapObject.Tags}" AutoGenerateColumns="False" HorizontalAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                            <DataGrid.Style>
+                                <Style TargetType="DataGrid">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsTagsPanel}" Value="False">
+                                            <Setter Property="Visibility" Value="Collapsed"></Setter>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGrid.Style>
                             <DataGrid.Columns>
-                                <DataGridTextColumn Binding="{Binding Tag}"  Header="Тег"/>
+                                <DataGridTextColumn Binding="{Binding Tag}"  Header="Тег" />
                                 <DataGridTextColumn Binding="{Binding Key}"  Header="Значение"/>
                             </DataGrid.Columns>
 
                         </DataGrid>
-                    </StackPanel>
-                </ScrollViewer>
+                    </Grid>
             </Border>
         </Grid>
         <dxr:RibbonStatusBarControl Grid.Row="2">

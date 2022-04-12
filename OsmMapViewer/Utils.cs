@@ -248,72 +248,7 @@ namespace OsmMapViewer
                             mo.Tags.Add(new TagValue(){Tag = v.Name.ToString(),Key = v.Value.ToString()});
 
                     if(item.geojson != null){
-                        if(item.geojson.type == "Polygon"){
-                            MapPolygon poly = new MapPolygon();
-                            foreach (var coord in item.geojson.coordinates[0])
-                                poly.Points.Add(new GeoPoint(Utils.ParseDouble(coord[1].ToString()), Utils.ParseDouble(coord[0].ToString())));
-                            mo.Geometry = poly;
-                        }else if(item.geojson.type == "Point"){
-                            MapDot dot= new MapDot();
-                            dot.Location = new GeoPoint(Utils.ParseDouble(item.geojson.coordinates[1].ToString()), Utils.ParseDouble(item.geojson.coordinates[0].ToString()));
-                            mo.Geometry = dot;
-                        }else if(item.geojson.type == "LineString"){
-                            MapPolyline line = new MapPolyline();
-                            foreach (var coord in item.geojson.coordinates)
-                                line.Points.Add(new GeoPoint(Utils.ParseDouble(coord[1].ToString()), Utils.ParseDouble(coord[0].ToString())));
-                            mo.Geometry = line;
-                        }else if(item.geojson.type == "MultiLineString") {
-                            var mapPath = new MapPathGeometry();
-                            foreach (var coord in item.geojson.coordinates) {
-                                var mpf = new MapPathFigure();
-                                mpf.IsClosed = false;
-                                mpf.IsFilled = false;
-                                bool isStart = true;
-                                foreach (var coord1 in coord){
-                                    MapPolyLineSegment mp = new MapPolyLineSegment();
-                                    mp.Points.Add(new GeoPoint(Utils.ParseDouble(coord1[1].ToString()),
-                                        Utils.ParseDouble(coord1[0].ToString())));
-                                    if (isStart) {
-                                        mpf.StartPoint = mp.Points[0];
-                                        isStart = false;
-                                    }
-                                    mpf.Segments.Add(mp);
-                                }
-                                mapPath.Figures.Add(mpf);
-                            }
-                            mo.Geometry = new MapPath() { Data = mapPath };
-                        }else if(item.geojson.type == "MultiPolygon"){
-                            var mapPath = new MapPathGeometry();
-                            foreach (var coord in item.geojson.coordinates) {
-                                var mpf = new MapPathFigure();
-                                bool isStart = true;
-                                foreach (var coord1 in coord)
-                                {
-                                    MapPolyLineSegment mp = new MapPolyLineSegment();
-                                    foreach (var coord2 in coord1)
-                                        mp.Points.Add(new GeoPoint(Utils.ParseDouble(coord2[1].ToString()),
-                                            Utils.ParseDouble(coord2[0].ToString())));
-                                    if (isStart)
-                                    {
-                                        mpf.StartPoint = mp.Points[0];
-                                        isStart = false;
-                                    }
-
-                                    mpf.Segments.Add(mp);
-                                }
-                                mapPath.Figures.Add(mpf);
-                            }
-                            mo.Geometry = new MapPath() { Data = mapPath };
-                        }
-                        else{
-                            Utils.pushCrashLog(new Exception("Не удалось распознать тип " +
-                                                             item.geojson.type.ToString() + "  \r\n" + json));
-                            MessageBox.Show("Не удалось распознать тип " + item.geojson.type.ToString() +
-                                            "Геометрия будет пропущена!","Ошибка парсинга",MessageBoxButton.OK,MessageBoxImage.Exclamation);
-                            //throw new Exception("Не удалось распознать тип "+ item.geojson.type.ToString());
-                        }
-                        if (mo.Geometry != null)
-                            mo.Geometry.Tag = mo;
+                        mo.RawGeoJson = item.geojson.ToString();
                     }
                     list.Add(mo);
                 }
@@ -324,6 +259,92 @@ namespace OsmMapViewer
             }*/
 
             return list;
+        }
+
+        public static MapItem MapItemFromGeoJson(string json){
+            if (string.IsNullOrWhiteSpace(json))
+                return null;
+            dynamic geojson = JObject.Parse(json);
+            MapItem item = null;
+            if (geojson.type == "Polygon")
+            {
+                MapPolygon poly = new MapPolygon();
+                foreach (var coord in geojson.coordinates[0])
+                    poly.Points.Add(new GeoPoint(Utils.ParseDouble(coord[1].ToString()), Utils.ParseDouble(coord[0].ToString())));
+                item = poly;
+            }
+            else if (geojson.type == "Point")
+            {
+                MapDot dot = new MapDot();
+                dot.Location = new GeoPoint(Utils.ParseDouble(geojson.coordinates[1].ToString()), Utils.ParseDouble(geojson.coordinates[0].ToString()));
+                item = dot;
+            }
+            else if (geojson.type == "LineString")
+            {
+                MapPolyline line = new MapPolyline();
+                foreach (var coord in geojson.coordinates)
+                    line.Points.Add(new GeoPoint(Utils.ParseDouble(coord[1].ToString()), Utils.ParseDouble(coord[0].ToString())));
+                item = line;
+            }
+            else if (geojson.type == "MultiLineString")
+            {
+                var mapPath = new MapPathGeometry();
+                foreach (var coord in geojson.coordinates)
+                {
+                    var mpf = new MapPathFigure();
+                    mpf.IsClosed = false;
+                    mpf.IsFilled = false;
+                    bool isStart = true;
+                    foreach (var coord1 in coord)
+                    {
+                        MapPolyLineSegment mp = new MapPolyLineSegment();
+                        mp.Points.Add(new GeoPoint(Utils.ParseDouble(coord1[1].ToString()),
+                            Utils.ParseDouble(coord1[0].ToString())));
+                        if (isStart)
+                        {
+                            mpf.StartPoint = mp.Points[0];
+                            isStart = false;
+                        }
+                        mpf.Segments.Add(mp);
+                    }
+                    mapPath.Figures.Add(mpf);
+                }
+                item = new MapPath() { Data = mapPath };
+            }
+            else if (geojson.type == "MultiPolygon")
+            {
+                var mapPath = new MapPathGeometry();
+                foreach (var coord in geojson.coordinates)
+                {
+                    var mpf = new MapPathFigure();
+                    bool isStart = true;
+                    foreach (var coord1 in coord)
+                    {
+                        MapPolyLineSegment mp = new MapPolyLineSegment();
+                        foreach (var coord2 in coord1)
+                            mp.Points.Add(new GeoPoint(Utils.ParseDouble(coord2[1].ToString()),
+                                Utils.ParseDouble(coord2[0].ToString())));
+                        if (isStart)
+                        {
+                            mpf.StartPoint = mp.Points[0];
+                            isStart = false;
+                        }
+
+                        mpf.Segments.Add(mp);
+                    }
+                    mapPath.Figures.Add(mpf);
+                }
+                item = new MapPath() { Data = mapPath };
+            }
+            else
+            {
+                Utils.pushCrashLog(new Exception("Не удалось распознать тип " +
+                                                 geojson.type.ToString() + "  \r\n" + json));
+                MessageBox.Show("Не удалось распознать тип " + geojson.type.ToString() +
+                                "Геометрия будет пропущена!", "Ошибка парсинга", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+                //throw new Exception("Не удалось распознать тип "+ item.geojson.type.ToString());
+            }
+            return item;
         }
 
         public static MessageBoxResult MsgBoxInfo(string msg, string title = "Информация") {

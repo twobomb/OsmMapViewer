@@ -19,6 +19,49 @@ namespace OsmMapViewer.Models
 
         public ObservableCollection<MapObject> Objects { get; set; } = new ObservableCollection<MapObject>();
 
+        private bool _IsShowPushpin = true;
+        public bool IsShowPushpin
+        {
+            get
+            {
+                return _IsShowPushpin;
+            }
+            set
+            {
+                if (_IsShowPushpin != value)
+                {
+                    if (value)
+                        this.mapItemStorage.Items.AddRange(Objects.Select(e => e.MapCenter).ToArray());
+                    else
+                    {
+                        foreach (var item in Objects)
+                            this.mapItemStorage.Items.Remove(item.MapCenter);
+                    }
+                }
+                _IsShowPushpin = value;
+                OnPropertyChanged("IsShowPushpin");
+            }
+        }
+        public bool _IsShowGeometry = true;
+        public bool IsShowGeometry{
+            get{
+                return _IsShowGeometry;
+            }
+            set
+            {
+                if (_IsShowGeometry != value){
+                    if (value)
+                        this.mapItemStorage.Items.AddRange(Objects.Select(e => e.Geometry).ToArray());
+                    else{
+                        foreach (var item in Objects)
+                            this.mapItemStorage.Items.Remove(item.Geometry);
+                    }
+                }
+                _IsShowGeometry = value;
+                OnPropertyChanged("IsShowGeometry");
+            }
+        }
+
         private MapItemStorage mapItemStorage;
         public bool _Visible = true;
         public bool Visible { 
@@ -65,9 +108,10 @@ namespace OsmMapViewer.Models
                                 Thickness = 2
                             });
                         geom.CanMove = false;
-                        this.mapItemStorage.Items.Add(geom);
-
-                        this.mapItemStorage.Items.Add(((MapObject)eNewItem).MapCenter);
+                        if(IsShowGeometry)
+                            this.mapItemStorage.Items.Add(geom);
+                        if(IsShowPushpin)
+                            this.mapItemStorage.Items.Add(((MapObject)eNewItem).MapCenter);
                     }
 
                     break;
@@ -75,10 +119,11 @@ namespace OsmMapViewer.Models
                     this.mapItemStorage.Items.Clear();
                     break;
                 case "Remove":
-                    foreach (var eNewItem in e.NewItems)
-                    {
-                        this.mapItemStorage.Items.Remove(((MapObject) eNewItem).MapCenter);
-                        this.mapItemStorage.Items.Remove(((MapObject) eNewItem).Geometry);
+                    foreach (var eNewItem in e.NewItems){
+                        if(IsShowPushpin)
+                            this.mapItemStorage.Items.Remove(((MapObject) eNewItem).MapCenter);
+                        if (IsShowGeometry)
+                            this.mapItemStorage.Items.Remove(((MapObject) eNewItem).Geometry);
                     }
 
                     break;
