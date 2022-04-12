@@ -40,6 +40,13 @@ namespace OsmMapViewer.ViewModel
                         }
                     }
                 }
+                //usertags
+                foreach(var v in userTags){
+                    if (!list.ContainsKey(v.Tag))
+                        list.Add(v.Tag, new List<string>());
+                    list[v.Tag].Add(v.Key);
+                }
+
                 return list;
             }
         }
