@@ -96,7 +96,12 @@
       <DependentUpon>SplashScreen.xaml</DependentUpon>
     </Compile>
     <Compile Include="Misc\Config.cs" />
+    <Compile Include="Misc\MsgPrinter.xaml.cs">
+      <DependentUpon>MsgPrinter.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Misc\RelayCommand.cs" />
+    <Compile Include="Misc\WindowBlur.cs" />
+    <Compile Include="Models\DataMsgPrinter.cs" />
     <Compile Include="Models\LayerData.cs" />
     <Compile Include="Models\MapObject.cs" />
     <Compile Include="Models\TagValue.cs" />
@@ -108,6 +113,7 @@
     <Compile Include="Utils.cs" />
     <Compile Include="ViewModel\AddUserTagsViewModel.cs" />
     <Compile Include="ViewModel\MainWindowViewModel.cs" />
+    <Compile Include="ViewModel\MsgPrinterViewModel.cs" />
     <Compile Include="ViewModel\SelectorViewModel.cs" />
     <Compile Include="ViewModel\ViewModelBase.cs" />
     <Compile Include="ViewModel\WaitViewModel.cs" />
@@ -132,6 +138,10 @@
       <SubType>Code</SubType>
     </Compile>
     <Page Include="Dialogs\Selector.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Misc\MsgPrinter.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

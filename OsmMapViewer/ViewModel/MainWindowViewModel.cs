@@ -250,8 +250,10 @@ namespace OsmMapViewer.ViewModel
         public ObservableCollection<MapObject> SearchResults { get; set; } = new ObservableCollection<MapObject>();
         //Выводимые адреса поиска для listbox
         public ObservableCollection<MapObject> AddressesResults { get; set; }
- #endregion
+        #endregion
 
+
+        public MsgPrinterViewModel MsgPrinterVM { get; set; } = new MsgPrinterViewModel();
         private static readonly HttpClient httpClient = new HttpClient();
         private readonly MainWindow Window;
         //display down text
@@ -785,7 +787,10 @@ public void SearchObjects(string json){
                 return gotoPoint ??
                        (gotoPoint = new RelayCommand(obj =>
                        {
-
+                           MsgPrinterVM.Warning("что лалалалал","eeeeeeeeeeeeeeeeeeeeee eeeeeeeeeeeee eeeeeeeeeeeeeee eeeeeeeeeeee");
+                           MsgPrinterVM.Error("что лалалалал1 213313 12 3 21");
+                           MsgPrinterVM.Info("Hello world!");
+                           MsgPrinterVM.Success("!!!Hello world!");
                            Window.mapControl.CenterPoint = new GeoPoint(CoordPosLat,CoordPosLon);
 
                        }));

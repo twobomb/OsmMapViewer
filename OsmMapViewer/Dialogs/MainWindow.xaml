@@ -15,6 +15,7 @@
                      xmlns:system="clr-namespace:System;assembly=mscorlib"
                      x:Class="OsmMapViewer.MainWindow"
                      xmlns:viewModel="clr-namespace:OsmMapViewer.ViewModel"
+                     xmlns:misc="clr-namespace:OsmMapViewer.Misc"
                      Title="MainWindow" Height="658" Width="1195">
     <Grid>
         <Grid.RowDefinitions>
@@ -22,7 +23,16 @@
             <RowDefinition Height="*"></RowDefinition>
             <RowDefinition Height="Auto"></RowDefinition>
         </Grid.RowDefinitions>
-        <dxr:RibbonControl Grid.Row="0" RibbonStyle="Office2019" ShowApplicationButton="False">
+        <dxr:RibbonControl Grid.Row="0" RibbonStyle="Office2019" ShowApplicationButton="False" >
+            <dxr:RibbonControl.Style>
+                <Style TargetType="dxr:RibbonControl"> 
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding WaitVMM.WaitVisible}" Value="True">
+                            <Setter Property="IsHitTestVisible" Value="False"></Setter>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </dxr:RibbonControl.Style>
             <dxr:RibbonControl.PageHeaderItems>
                 <dxb:BarButtonItem Content="BarButtonItem"/>
                 <dxb:BarButtonItem Content="BarButtonItem"/>
@@ -128,8 +138,28 @@
                 <RowDefinition Height="Auto"></RowDefinition>
             </Grid.RowDefinitions>
             <dxm:MapControl Grid.RowSpan="3" x:Name="mapControl" HorizontalAlignment="Stretch" >
+
+                <dxm:MapControl.Style>
+                    <Style TargetType="dxm:MapControl">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding WaitVMM.WaitVisible}" Value="True">
+                                <Setter Property="IsHitTestVisible" Value="False"></Setter>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </dxm:MapControl.Style>
             </dxm:MapControl>
             <dx:DXTabControl Grid.Column="1" Padding="0 10 0 0" SelectedIndex="{Binding SelectedTabIndex}">
+
+                <dx:DXTabControl.Style>
+                    <Style TargetType="dx:DXTabControl">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding WaitVMM.WaitVisible}" Value="True">
+                                <Setter Property="IsHitTestVisible" Value="False"></Setter>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </dx:DXTabControl.Style>
                 <dx:DXTabControl.View>
                     <dx:TabControlScrollView AllowAnimation="True"/>
                 </dx:DXTabControl.View>
@@ -421,6 +451,16 @@
             </Border>
         </Grid>
         <dxr:RibbonStatusBarControl Grid.Row="2">
+
+            <dxr:RibbonStatusBarControl.Style>
+                <Style TargetType="dxr:RibbonStatusBarControl">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding WaitVMM.WaitVisible}" Value="True">
+                            <Setter Property="IsHitTestVisible" Value="False"></Setter>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </dxr:RibbonStatusBarControl.Style>
             <dxr:RibbonStatusBarControl.LeftItems>
                 <dxb:BarStaticItem Content="{Binding DisplayDownText}" Foreground="{Binding DisplayDownTextColor}"/>
             </dxr:RibbonStatusBarControl.LeftItems>
@@ -468,5 +508,7 @@
                 </DataTemplate>
             </dx:WaitIndicator.ContentTemplate>
         </dx:WaitIndicator>
+
+       <misc:MsgPrinter Grid.Row="0" Grid.RowSpan="3" DataContext="{Binding MsgPrinterVM}" HorizontalAlignment="Right" VerticalAlignment="Top" VerticalContentAlignment="Top"></misc:MsgPrinter>
     </Grid>
 </dx:ThemedWindow>
