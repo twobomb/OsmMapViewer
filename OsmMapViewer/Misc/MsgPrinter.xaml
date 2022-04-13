@@ -8,37 +8,184 @@
              xmlns:models="clr-namespace:OsmMapViewer.Models"
              mc:Ignorable="d" 
              d:DataContext="{d:DesignInstance Type=viewModel:MsgPrinterViewModel}"
+             Background="Black"
              >
-    <Border Width="350" VerticalAlignment="Top" >
+    <Grid>
+        <Border Width="330" VerticalAlignment="Top"  >
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsShowHistory}" Value="True">
+                            <Setter Property="Visibility" Value="Collapsed"></Setter>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
             <ItemsControl ItemsSource="{Binding Items}" VerticalAlignment="Top" VerticalContentAlignment="Top">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
                         <Grid VerticalAlignment="Top"  Background="{Binding Background}">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"></RowDefinition>
+                                <RowDefinition Height="Auto"></RowDefinition>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"></ColumnDefinition>
+                                <ColumnDefinition Width="*"></ColumnDefinition>
+                                <ColumnDefinition Width="30"></ColumnDefinition>
+                            </Grid.ColumnDefinitions>
+                            <Border Grid.Column="2" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="0 8 8 0"  Cursor="Hand" Background="Transparent"  >
+                                <Border.InputBindings>
+                                    <MouseBinding MouseAction="LeftClick" Command="{Binding Delete}"></MouseBinding>
+                                </Border.InputBindings>
+                                <Viewbox Width="15" Height="15" >
+                                    <Canvas Width="24" Height="24" >
+                                        <Path  Data="M20 6.91L17.09 4L12 9.09L6.91 4L4 6.91L9.09 12L4 17.09L6.91 20L12 14.91L17.09 20L20 17.09L14.91 12L20 6.91Z" >
+                                            <Path.Style>
+                                                <Style TargetType="Path">
+                                                    <Style.Setters>
+                                                        <Setter Property="Fill" Value="White"></Setter>
+                                                    </Style.Setters>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Path=IsMouseOver, RelativeSource={RelativeSource AncestorType=Border,Mode=FindAncestor}}" Value="True" >
+                                                            <Setter Property="Fill" Value="#FF2E2E2E"></Setter>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Path.Style>
+                                        </Path>
+                                    </Canvas>
+                                </Viewbox>
+                            </Border>
+
+                            <TextBlock Margin="0 10 0 5" Grid.Column="1" Foreground="White" HorizontalAlignment="Stretch" TextWrapping="Wrap" Text="{Binding Title}" FontSize="16" FontWeight="Medium"></TextBlock>
+                            <TextBlock Margin="0 0 0 15"  Grid.Column="1" Grid.Row="1"  Foreground="#FFE8E8E8" Text="{Binding Message}" TextWrapping="Wrap" FontSize="12" ></TextBlock>
+                            <Viewbox Width="35" Height="35" Grid.Row="0"  Grid.RowSpan="2" Margin="5 15 10 0" VerticalAlignment="Top">
+                                <Canvas Width="24" Height="24">
+                                    <Path Fill="White" Data="{Binding Icon}" />
+                                </Canvas>
+                            </Viewbox>
+                            <Border Grid.Row="1" Grid.ColumnSpan="3" Background="{Binding LineBackground}" HorizontalAlignment="Stretch" Margin="0 0 100 0" Height="8" VerticalAlignment="Bottom"></Border>
+                        </Grid>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </Border>
+
+
+        <Grid>
+            <Grid.Style>
+                <Style TargetType="Grid">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsShowHistory}" Value="False">
+                            <Setter Property="Visibility" Value="Collapsed"></Setter>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Grid.Style>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"></RowDefinition>
+                <RowDefinition Height="Auto"></RowDefinition>
+            </Grid.RowDefinitions>
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <Grid  Width="330" VerticalAlignment="Top">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*"></RowDefinition>
+                            <RowDefinition Height="Auto"></RowDefinition>
+                        </Grid.RowDefinitions>
+                        <Border >
+                            <ItemsControl ItemsSource="{Binding HistoryItems}" VerticalAlignment="Top" VerticalContentAlignment="Top">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid VerticalAlignment="Top"  Background="{Binding Background}">
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"></RowDefinition>
+                                                <RowDefinition Height="Auto"></RowDefinition>
+                                                <RowDefinition Height="Auto"></RowDefinition>
+                                            </Grid.RowDefinitions>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"></ColumnDefinition>
+                                                <ColumnDefinition Width="*"></ColumnDefinition>
+                                                <ColumnDefinition Width="30"></ColumnDefinition>
+                                            </Grid.ColumnDefinitions>
+                                            <Border Grid.Column="2" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="0 8 8 0"  Cursor="Hand" Background="Transparent"  >
+                                                <Border.InputBindings>
+                                                    <MouseBinding MouseAction="LeftClick" Command="{Binding DeleteFromHistory}"></MouseBinding>
+                                                </Border.InputBindings>
+                                                <Viewbox Width="15" Height="15" >
+                                                    <Canvas Width="24" Height="24" >
+                                                        <Path  Data="M9,3V4H4V6H5V19A2,2 0 0,0 7,21H17A2,2 0 0,0 19,19V6H20V4H15V3H9M9,8H11V17H9V8M13,8H15V17H13V8Z" >
+                                                            <Path.Style>
+                                                                <Style TargetType="Path">
+                                                                    <Style.Setters>
+                                                                        <Setter Property="Fill" Value="White"></Setter>
+                                                                    </Style.Setters>
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding Path=IsMouseOver, RelativeSource={RelativeSource AncestorType=Border,Mode=FindAncestor}}" Value="True" >
+                                                                            <Setter Property="Fill" Value="#FF2E2E2E"></Setter>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Path.Style>
+                                                        </Path>
+                                                    </Canvas>
+                                                </Viewbox>
+                                            </Border>
+
+                                            <TextBlock Margin="0 10 0 5" Grid.Column="1" Foreground="White" HorizontalAlignment="Stretch" TextWrapping="Wrap" Text="{Binding Title}" FontSize="16" FontWeight="Medium"></TextBlock>
+                                            <TextBlock Margin="0 0 0 0"  Grid.Column="1" Grid.Row="1"  Foreground="#FFE8E8E8" Text="{Binding Date,StringFormat=dd MMM HH:mm:ss}" TextWrapping="Wrap" FontSize="10" ></TextBlock>
+                                            <TextBlock Margin="0 0 0 15"  Grid.Column="1" Grid.Row="2"  Foreground="#FFE8E8E8" Text="{Binding Message}" TextWrapping="Wrap" FontSize="12" ></TextBlock>
+                                            <Viewbox Width="35" Height="35" Grid.Row="0"  Grid.RowSpan="3" Margin="5 15 10 0" VerticalAlignment="Top">
+                                                <Canvas Width="24" Height="24">
+                                                    <Path Fill="White" Data="{Binding Icon}" />
+                                                </Canvas>
+                                            </Viewbox>
+                                            <Border Grid.Row="2" Grid.ColumnSpan="3" Background="{Binding LineBackground}" HorizontalAlignment="Stretch" Margin="0 0 100 0" Height="8" VerticalAlignment="Bottom"></Border>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Border>
+                        <Border HorizontalAlignment="Stretch" Grid.Row="1" Background="Gainsboro">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Style.Setters>
+                                        <Setter Property="Visibility" Value="Collapsed"></Setter>
+                                    </Style.Setters>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HistoryItems.Count}" Value="0">
+                                            <Setter Property="Visibility" Value="Visible"></Setter>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"></RowDefinition>
                                     <RowDefinition Height="Auto"></RowDefinition>
                                 </Grid.RowDefinitions>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"></ColumnDefinition>
-                                    <ColumnDefinition Width="*"></ColumnDefinition>
-                                    <ColumnDefinition Width="30"></ColumnDefinition>
-                                </Grid.ColumnDefinitions>
-                                <Viewbox Width="15" Height="15" Grid.Column="2" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="0 8 8 0">
+                                <Viewbox Width="48" Height="48">
                                     <Canvas Width="24" Height="24">
-                                        <Path Fill="White" Data="M20 6.91L17.09 4L12 9.09L6.91 4L4 6.91L9.09 12L4 17.09L6.91 20L12 14.91L17.09 20L20 17.09L14.91 12L20 6.91Z" />
+                                        <Path Fill="Black" Data="M12 2C17.5 2 22 6.5 22 12S17.5 22 12 22 2 17.5 2 12 6.5 2 12 2M12 4C10.1 4 8.4 4.6 7.1 5.7L18.3 16.9C19.3 15.5 20 13.8 20 12C20 7.6 16.4 4 12 4M16.9 18.3L5.7 7.1C4.6 8.4 4 10.1 4 12C4 16.4 7.6 20 12 20C13.9 20 15.6 19.4 16.9 18.3Z" />
                                     </Canvas>
                                 </Viewbox>
-                                <TextBlock Margin="0 10 0 5" Grid.Column="1" Foreground="White" HorizontalAlignment="Stretch" TextWrapping="Wrap" Text="{Binding Title}" FontSize="16" FontWeight="600"></TextBlock>
-                                <TextBlock Margin="0 0 0 15" Grid.Column="1"  Foreground="#FFE8E8E8" Grid.Row="1" Text="{Binding Message}" TextWrapping="Wrap" FontSize="12" ></TextBlock>
-                                <Viewbox Width="35" Height="35" Grid.Row="0"  Grid.RowSpan="2" Margin="5 15 10 0" VerticalAlignment="Top">
-                                    <Canvas Width="24" Height="24">
-                                        <Path Fill="White" Data="{Binding Icon}" />
-                                    </Canvas>
-                                </Viewbox>
-                                <Border Grid.Row="1" Grid.ColumnSpan="3" Background="{Binding LineBackground}" HorizontalAlignment="Stretch" Margin="0 0 100 0" Height="8" VerticalAlignment="Bottom"></Border>
+                                <TextBlock Text="Нет новый сообщений" Grid.Row="1" TextAlignment="Center" HorizontalAlignment="Center" FontSize="16"></TextBlock>
                             </Grid>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-    </Border>
+                        </Border>
+                    </Grid>
+                </ScrollViewer>
+                <dx:SimpleButton Grid.Row="1" Command="{Binding ClearHistory}"  HorizontalAlignment="Stretch" FontWeight="Bold" Background="#FFF7EC00" BorderBrush="Transparent" Grid.Column="1" Height="30"  Content="Очистить историю сообщений" GlyphAlignment="Left" GlyphToContentOffset="10" FontSize="12"  GlyphHeight="18" Glyph="{dx:DXImage 'SvgImages/Icon Builder/Actions_Clear.svg'}" >
+                    <dx:SimpleButton.Style>
+                        <Style TargetType="dx:SimpleButton">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding HistoryItems.Count}" Value="0">
+                                    <Setter Property="Visibility" Value="Collapsed"></Setter>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </dx:SimpleButton.Style>
+                </dx:SimpleButton>
+        </Grid>
+        
+    </Grid>
 </UserControl>

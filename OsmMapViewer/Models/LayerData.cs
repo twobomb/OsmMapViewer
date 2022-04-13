@@ -15,9 +15,36 @@ namespace OsmMapViewer.Models
 {
     public class LayerData: VectorLayer, INotifyPropertyChanged
     {
-        public string DisplayName { get; set; }
+
+        private string _DisplayName = "";
+        public string DisplayName
+        {
+            get
+            {
+                return _DisplayName;
+            }
+            set
+            {
+                _DisplayName= value;
+                OnPropertyChanged("DisplayName");
+            }
+        }
+
 
         public ObservableCollection<MapObject> Objects { get; set; } = new ObservableCollection<MapObject>();
+        private bool _IsRenameActive = false;
+        public bool IsRenameActive
+        {
+            get
+            {
+                return _IsRenameActive;
+            }
+            set
+            {
+                _IsRenameActive = value;
+                OnPropertyChanged("IsRenameActive");
+            }
+        }
 
         private bool _IsShowPushpin = true;
         public bool IsShowPushpin

@@ -63,9 +63,9 @@
             <dxr:RibbonPageCategory Caption="Найти на карте" Color="#FF92B250">
                 <dxr:RibbonPage  Caption="Зона выборки">
                     <dxr:RibbonPageGroup Caption="Выбор зоны">
-                        <dxb:BarCheckItem  Content="Вся карта" RibbonStyle="Large" GroupIndex="21" IsChecked="True" LargeGlyph="{dx:DXImage SvgImages/Dashboards/DefaultMap.svg}"/>
-                        <dxb:BarCheckItem Content="Прямоугольник" RibbonStyle="Large" GroupIndex="21" LargeGlyph="{dx:DXImage SvgImages/PDF Viewer/SelectAll.svg}"/>
-                        <dxb:BarCheckItem x:Name="bci_rvt" Content="Радиус вокруг точки(РВТ)" RibbonStyle="Large" GroupIndex="21" LargeGlyph="{dx:DXImage SvgImages/Business Objects/BO_State.svg}"/>
+                        <dxb:BarCheckItem  Content="Вся карта" RibbonStyle="Large" GroupIndex="21" IsChecked="{Binding IsFindAllMap}" LargeGlyph="{dx:DXImage SvgImages/Dashboards/DefaultMap.svg}"/>
+                        <dxb:BarCheckItem Content="Полигон" RibbonStyle="Large" IsChecked="{Binding IsFindRect}" GroupIndex="21" LargeGlyph="{dx:DXImage SvgImages/Chart/ChartType_PolarLine.svg}"/>
+                        <dxb:BarCheckItem x:Name="bci_rvt" Content="Радиус вокруг точки(РВТ)" RibbonStyle="Large" IsChecked="{Binding IsFindCircle}" GroupIndex="21" LargeGlyph="{dx:DXImage SvgImages/Business Objects/BO_State.svg}"/>
                     </dxr:RibbonPageGroup>
                     <dxr:RibbonPageGroup Caption="Настройка РВТ">
                         <!--<dxr:RibbonPageGroup.Style>
@@ -79,17 +79,17 @@
                                 </Style.Triggers>
                             </Style>
                         </dxr:RibbonPageGroup.Style> -->
-                        <dxb:BarEditItem Content="Широта" EditWidth="100" >
+                        <dxb:BarEditItem Content="Широта" EditWidth="100" EditValue="{Binding RadPosLat}" >
                             <dxb:BarEditItem.EditSettings>
                                 <dxe:SpinEditSettings Mask="f5" MaskCulture="en"/>
                             </dxb:BarEditItem.EditSettings>
                         </dxb:BarEditItem>
-                        <dxb:BarEditItem Content="Долгота" EditWidth="100">
+                        <dxb:BarEditItem Content="Долгота" EditWidth="100"  EditValue="{Binding RadPosLon}">
                             <dxb:BarEditItem.EditSettings>
                                 <dxe:SpinEditSettings Mask="f5" MaskCulture="en"/>
                             </dxb:BarEditItem.EditSettings>
                         </dxb:BarEditItem>
-                        <dxb:BarEditItem Content="Радиус(метры)" EditWidth="100" EditValue="1000" >
+                        <dxb:BarEditItem Content="Радиус(метры)" EditWidth="100" EditValue="{Binding RadiusMetres}">
                             <dxb:BarEditItem.EditSettings>
                                 <dxe:SpinEditSettings MinValue="10" MaxValue="500000" Mask="n0" MaskBeepOnError="True"/>
                             </dxb:BarEditItem.EditSettings>
@@ -118,7 +118,7 @@
                 <dxr:RibbonPage  Caption="Категории">
                     <dxr:RibbonPageGroup Caption="Расширенный">
                         <dxb:BarButtonItem Command ="{Binding SelectFromDicts}" Content="Выбрать из справочника тегов" RibbonStyle="Large" LargeGlyph="{dx:DXImage SvgImages/Dashboards/ShowLegend.svg}"/>
-                        <dxb:BarButtonItem Content="Ручной ввод тегов" RibbonStyle="Large" LargeGlyph="{dx:DXImage SvgImages/Business Objects/BO_Price_Item.svg}"/>
+                        <dxb:BarButtonItem Command ="{Binding SelectFromUserTags}" Content="Ручной ввод тегов" RibbonStyle="Large" LargeGlyph="{dx:DXImage SvgImages/Business Objects/BO_Price_Item.svg}"/>
                     </dxr:RibbonPageGroup>
                     <dxr:RibbonPageGroup Caption="Ribbon Page Group">
                         <dxb:BarButtonItem Command="{Binding Religion}" Content="Религиозные" Glyph="{dx:DXImage SvgImages/Scheduling/GoToToday.svg}"/>
@@ -330,21 +330,8 @@
                                                                 </Style>
                                                             </Button.Style>
                                                         </Button>
-                                                        <Button Height="30" Background="Transparent" BorderBrush="Transparent" Cursor="Hand" ToolTip="Переименовать слой">
-                                                            <Button.Style>
-                                                                <Style TargetType="Button">
-                                                                    <Style.Setters>
-                                                                        <Setter Property="ContentTemplate" >
-                                                                            <Setter.Value>
-                                                                                <DataTemplate>
-                                                                                    <Image Source="{dx:DXImage 'Images/Actions/EditName_32x32.png'}" Stretch="UniformToFill"/>
-                                                                                </DataTemplate>
-                                                                            </Setter.Value>
-                                                                        </Setter>
-                                                                    </Style.Setters>
-                                                                </Style>
-                                                            </Button.Style>
-                                                        </Button>
+                                                        <dx:SimpleButton IsChecked="{Binding IsRenameActive}" Height="30" Background="Transparent" BorderBrush="Transparent" Cursor="Hand" ToolTip="Переименовать слой" ButtonKind="Toggle" Glyph="{dx:DXImage 'Images/Actions/EditName_32x32.png'}">
+                                                        </dx:SimpleButton>
                                                         <Button CommandParameter="{Binding}" Command="{Binding  Path=DataContext.DeleteLayer, RelativeSource={RelativeSource AncestorType={x:Type dx:ThemedWindow},Mode=FindAncestor}}" Height="30" Background="Transparent" BorderBrush="Transparent" Cursor="Hand"  ToolTip="Удалить слой">
                                                             <Button.Style>
                                                                 <Style TargetType="Button">
@@ -395,7 +382,38 @@
                                                     </StackPanel>
                                                 </Grid>                                                
                                             </Border>
-                                            <TextBlock FontSize="16" FontWeight="Bold"  HorizontalAlignment="Stretch" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Padding="5 " Grid.Row="1" Text="{Binding DisplayName}"></TextBlock>
+                                            <TextBlock FontSize="16" FontWeight="Bold"  HorizontalAlignment="Stretch" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Padding="5 " Grid.Row="1" Text="{Binding DisplayName}">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsRenameActive}" Value="True">
+                                                                <Setter Property="Visibility" Value="Collapsed"></Setter>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                            <Grid  Grid.Row="1">
+                                                <Grid.Style>
+                                                    <Style TargetType="Grid">
+                                                        <Style.Setters>
+                                                            <Setter Property="Visibility" Value="Collapsed"></Setter>
+                                                        </Style.Setters>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsRenameActive}" Value="True">
+                                                                <Setter Property="Visibility" Value="Visible"></Setter>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Grid.Style>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"></ColumnDefinition>
+                                                    <ColumnDefinition Width="Auto"></ColumnDefinition>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBox FontSize="16" HorizontalAlignment="Stretch" TextWrapping="Wrap" Padding="5 " Text="{Binding DisplayName,UpdateSourceTrigger=PropertyChanged}"></TextBox>
+                                                <dx:SimpleButton ButtonKind="Toggle" IsChecked="{Binding IsRenameActive}"  Grid.Column="1" Command="{Binding WaitCancelButton}"  HorizontalAlignment="Right" Height="30"  GlyphAlignment="Right" GlyphToContentOffset="10" FontSize="14" Padding="10 0"  GlyphHeight="20" Glyph="{dx:DXImage 'SvgImages/Content/CheckBox.svg'}" >
+                                                </dx:SimpleButton>
+                                            </Grid>
                                         </Grid>
                                     </Border>
                                 </DataTemplate>
@@ -462,10 +480,40 @@
                 </Style>
             </dxr:RibbonStatusBarControl.Style>
             <dxr:RibbonStatusBarControl.LeftItems>
-                <dxb:BarStaticItem Content="{Binding DisplayDownText}" Foreground="{Binding DisplayDownTextColor}"/>
+                
             </dxr:RibbonStatusBarControl.LeftItems>
             <dxr:RibbonStatusBarControl.RightItems>
                 <dxb:BarButtonItem x:Name="printItem" Content="Print" Glyph="{dx:DXImage SvgImages/Print/Print.svg}"/>
+                <dxb:BarItemSeparator/>
+                <dxb:BarLinkContainerItem/>
+                <dxb:BarLinkContainerItem/>
+                <dxb:BarCheckItem IsChecked="{Binding MsgPrinterVM.IsShowHistory}">
+                    <dxb:BarCheckItem.ContentTemplate>
+                        <DataTemplate>
+                            <Grid DataContext="{Binding Path=DataContext, RelativeSource={RelativeSource AncestorType=dx:ThemedWindow,Mode=FindAncestor}}">
+                                <Viewbox Height="20">
+                                    <Canvas Width="24" Height="24">
+                                        <Path  Data="M21,19V20H3V19L5,17V11C5,7.9 7.03,5.17 10,4.29C10,4.19 10,4.1 10,4A2,2 0 0,1 12,2A2,2 0 0,1 14,4C14,4.1 14,4.19 14,4.29C16.97,5.17 19,7.9 19,11V17L21,19M14,21A2,2 0 0,1 12,23A2,2 0 0,1 10,21" >
+                                            <Path.Style>
+                                                <Style TargetType="Path">
+                                                    <Style.Setters>
+                                                        <Setter Property="Fill" Value="#FFF08B13"></Setter>
+                                                    </Style.Setters>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding MsgPrinterVM.HistoryItems.Count}" Value="0" >
+                                                            <Setter Property="Fill" Value="#FF8F8F8F"></Setter>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Path.Style>
+                                        </Path>
+                                    </Canvas>
+                                </Viewbox>
+                                <TextBlock FontWeight="Medium" Text="{Binding MsgPrinterVM.HistoryItems.Count}" FontSize="11" Margin="25 0 0 0" VerticalAlignment="Top"></TextBlock>
+                            </Grid>
+                        </DataTemplate>
+                    </dxb:BarCheckItem.ContentTemplate>
+                </dxb:BarCheckItem>
             </dxr:RibbonStatusBarControl.RightItems>
         </dxr:RibbonStatusBarControl>
 
@@ -508,7 +556,6 @@
                 </DataTemplate>
             </dx:WaitIndicator.ContentTemplate>
         </dx:WaitIndicator>
-
-       <misc:MsgPrinter Grid.Row="0" Grid.RowSpan="3" DataContext="{Binding MsgPrinterVM}" HorizontalAlignment="Right" VerticalAlignment="Top" VerticalContentAlignment="Top"></misc:MsgPrinter>
+        <misc:MsgPrinter Margin="0 60 0 25" Opacity="0.8" Grid.Row="0" Grid.RowSpan="3" DataContext="{Binding MsgPrinterVM}" HorizontalAlignment="Right" VerticalAlignment="Bottom" VerticalContentAlignment="Bottom" Height="Auto"></misc:MsgPrinter>
     </Grid>
 </dx:ThemedWindow>

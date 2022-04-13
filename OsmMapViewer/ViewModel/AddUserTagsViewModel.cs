@@ -25,6 +25,20 @@ namespace OsmMapViewer.ViewModel
             }
         }
 
+        public Dictionary<string, List<string>> ItemsStringArray{
+            get{
+                Dictionary<string, List<string>> list = new Dictionary<string, List<string>>();
+                foreach (var v in Items)
+                {
+                    if (!list.ContainsKey(v.Tag))
+                        list.Add(v.Tag, new List<string>());
+                    list[v.Tag].Add(v.Key);
+                }
+
+                return list;
+            }
+        }
+
         public ObservableCollection<TagValue> Items { get; set; } = new ObservableCollection<TagValue>();
 
         public bool CheckItems() {

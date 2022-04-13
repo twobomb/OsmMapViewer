@@ -98,7 +98,78 @@ namespace OsmMapViewer.ViewModel
 
         #endregion
         #region int,double
+        //Настройка РВТ радиус вокруг точки
+        public double _RadPosLon = 0;
+        public double RadPosLon { //x
+            get{
+                return _RadPosLon;
+            }
+            set
+            {
+                try
+                {
+                    if (SetProperty(ref _RadPosLon, value) && MapPointSelection != null)
+                {
+                    MapPointSelection.Location = new GeoPoint(RadPosLat, RadPosLon);
+                    (ServiceLayerVector.Data as MapItemStorage).Items.Clear();
+                    (ServiceLayerVector.Data as MapItemStorage).Items.Add(MapPointSelection);
+                    var el = MapEllipse.CreateByCenter(Window.mapControl.CoordinateSystem, MapPointSelection.Location, (double)RadiusMetres * 2f / 1000f, (double)RadiusMetres * 2f / 1000f);
+                    el.Fill = new SolidColorBrush(Color.FromArgb(80, 121, 50, 168));
+                    el.Stroke = new SolidColorBrush(Color.FromArgb(255, 121, 50, 168));
+                    (ServiceLayerVector.Data as MapItemStorage).Items.Add(el);
 
+                    }
+                }
+                catch (Exception e)
+                {
+                    MsgPrinterVM.Error(e.Message);
+                }
+            }
+        } 
+
+        public double _RadPosLat = 0;//y
+        public double RadPosLat{ 
+            get{
+                return _RadPosLat;
+            }
+            set
+            {
+                try
+                {
+                    if (SetProperty(ref _RadPosLat, value) && MapPointSelection != null)
+                    {
+                        MapPointSelection.Location = new GeoPoint(RadPosLat, RadPosLon);
+                        (ServiceLayerVector.Data as MapItemStorage).Items.Clear();
+                        (ServiceLayerVector.Data as MapItemStorage).Items.Add(MapPointSelection);
+                        var el = MapEllipse.CreateByCenter(Window.mapControl.CoordinateSystem, MapPointSelection.Location, (double)RadiusMetres * 2f / 1000f, (double)RadiusMetres * 2f / 1000f);
+                        el.Fill = new SolidColorBrush(Color.FromArgb(80, 121, 50, 168));
+                        el.Stroke = new SolidColorBrush(Color.FromArgb(255, 121, 50, 168));
+                        (ServiceLayerVector.Data as MapItemStorage).Items.Add(el);
+                    }
+                }catch(Exception e)
+                {
+                    MsgPrinterVM.Error(e.Message);
+                }
+            }
+        } 
+
+        public double _RadiusMetres = 1000;
+        public double RadiusMetres{ 
+            get{
+                return _RadiusMetres;
+            }
+            set
+            {
+                if (SetProperty(ref _RadiusMetres, value) && MapPointSelection != null){
+                    (ServiceLayerVector.Data as MapItemStorage).Items.Clear();
+                    (ServiceLayerVector.Data as MapItemStorage).Items.Add(MapPointSelection);
+                    var el = MapEllipse.CreateByCenter(Window.mapControl.CoordinateSystem, MapPointSelection.Location, (double)RadiusMetres * 2f / 1000f, (double)RadiusMetres * 2f / 1000f);
+                    el.Fill = new SolidColorBrush(Color.FromArgb(80, 121, 50, 168));
+                    el.Stroke = new SolidColorBrush(Color.FromArgb(255, 121, 50, 168));
+                    (ServiceLayerVector.Data as MapItemStorage).Items.Add(el);
+                }
+            }
+        } 
 
         //Координаты панели позиция
         public double CoordPosLon { get; set; }
@@ -127,6 +198,80 @@ namespace OsmMapViewer.ViewModel
         #endregion
 
         #region bools
+
+
+
+        public bool _IsFindAllMap = true;
+        public bool IsFindAllMap
+        {
+            get
+            {
+                return _IsFindAllMap;
+            }
+            set
+            {
+                if (SetProperty(ref _IsFindAllMap, value) && value){
+                    (ServiceLayerVector.Data as MapItemStorage).Items.Clear();
+                }
+            }
+        }
+
+
+        public bool _IsFindRect = false;
+        public bool IsFindRect{
+            get
+            {
+                return _IsFindRect;
+            }
+            set
+            {
+                if(SetProperty(ref _IsFindRect, value) && value)
+                {
+                    (ServiceLayerVector.Data as MapItemStorage).Items.Clear();
+                    MapPolygonSelection = new MapPolygon()
+                    {
+                        EnableSelection = false,
+                        EnableHighlighting = false,
+                        Fill = new SolidColorBrush(Color.FromArgb(80, 3, 32, 252)),
+                        Stroke = new SolidColorBrush(Color.FromArgb(255, 3, 32, 252)),
+                        Visible = false
+                    };
+                    (ServiceLayerVector.Data as MapItemStorage).Items.Add(MapPolygonSelection);
+                    MsgPrinterVM.Info("Удерживайте левый Shift и нажимайте левую кнопку мыши чтобы добавить точку или правую кнопку мыши чтобы удалить точку",10000,"Подсказка");
+                }
+            }
+        }
+
+        public bool _IsFindCircle = false;
+        public bool IsFindCircle
+        {
+            get
+            {
+                return _IsFindCircle;
+            }
+            set
+            {
+                if (SetProperty(ref _IsFindCircle, value) && value){
+
+                    MapPointSelection = new MapDot() { 
+                        Location = new GeoPoint(RadPosLat, RadPosLon),
+                        EnableSelection = false,
+                        EnableHighlighting = false,
+                        Size = 15,
+                        Fill = new SolidColorBrush(Color.FromArgb(80, 3, 32, 252)),
+                        Stroke = new SolidColorBrush(Color.FromArgb(255, 3, 32, 252))
+                    };
+                    (ServiceLayerVector.Data as MapItemStorage).Items.Clear();
+                    (ServiceLayerVector.Data as MapItemStorage).Items.Add(MapPointSelection);
+                    var el = MapEllipse.CreateByCenter(Window.mapControl.CoordinateSystem, MapPointSelection.Location, (double)RadiusMetres * 2f / 1000f, (double)RadiusMetres * 2f / 1000f);
+                    el.Fill = new SolidColorBrush(Color.FromArgb(80, 121, 50, 168));
+                    el.Stroke = new SolidColorBrush(Color.FromArgb(255, 121, 50, 168));
+                    (ServiceLayerVector.Data as MapItemStorage).Items.Add(el);
+                    MsgPrinterVM.Info("Удерживайте левый Shift и нажимайте левую кнопку мыши чтобы установить точку или используйте 'Настройка РВТ' на панели для ручного ввода параметров", 10000, "Подсказка");
+                }
+            }
+        }
+
 
         //Настройки нового слоя
         public bool IsShowPushpin { get; set; } = true;
@@ -224,20 +369,6 @@ namespace OsmMapViewer.ViewModel
                 }
             }
         }
-        public string displayDownText = "";
-        public string DisplayDownText
-        {
-            get
-            {
-                return displayDownText;
-            }
-            set
-            {
-                SetProperty(ref displayDownText, value);
-                if (!string.IsNullOrWhiteSpace(displayDownText))
-                    displayDownTextHide.Start();
-            }
-        }
         #endregion
 
 #region Collections
@@ -253,14 +384,18 @@ namespace OsmMapViewer.ViewModel
         #endregion
 
 
-        public MsgPrinterViewModel MsgPrinterVM { get; set; } = new MsgPrinterViewModel();
+        //Слои
+        public VectorLayer SearchResultVector { get; set; }
+        public VectorLayer ServiceLayerVector { get; set; }
+
+        public MsgPrinterViewModel MsgPrinterVM { get; set; }
         private static readonly HttpClient httpClient = new HttpClient();
         private readonly MainWindow Window;
-        //display down text
-        private Timer displayDownTextHide = new Timer(10000) {
-            AutoReset = false
-        };
 
+        //Зона выделенного полигона
+        public MapPolygon MapPolygonSelection;
+        //Выделенная точка РВТ
+        public MapDot MapPointSelection;
 
         //Показать больше записей объектов выбранного слоя
         public void ShowMoreSelectedLayerList(){
@@ -277,12 +412,6 @@ namespace OsmMapViewer.ViewModel
         public WaitViewModel WaitVMM { get; set; } = new WaitViewModel();
 
         
-        public Brush displayDownTextColor = Brushes.Red;
-        public Brush DisplayDownTextColor {
-            get => displayDownTextColor;
-            set => SetProperty(ref displayDownTextColor, value);
-        }
-
 
         public void ShowAddresses(string query){
             Window.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(() =>{
@@ -309,7 +438,7 @@ namespace OsmMapViewer.ViewModel
                 }
                 else {
                     if (task.Exception != null)
-                        DisplayDownText = "Произошла ошибка при поиске. " + task.Exception.GetBaseException().Message;
+                        MsgPrinterVM.Error("Произошла ошибка при поиске. " + task.Exception.GetBaseException().Message,10000);
                     Searching = false;
                 }
 
@@ -339,7 +468,7 @@ namespace OsmMapViewer.ViewModel
                 }
                 else {
                     if (task.Exception != null)
-                        DisplayDownText = "Произошла ошибка при поиске. " + task.Exception.GetBaseException().Message;
+                        MsgPrinterVM.Error("Произошла ошибка при поиске. " + task.Exception.GetBaseException().Message, 10000);
                     Searching = false;
                 }
 
@@ -368,21 +497,63 @@ namespace OsmMapViewer.ViewModel
             AutoReset = false
         };
 
-        //Слой поиска по адресам
-        public VectorLayer SearchResultVector { get; set; }
 
         public MainWindowViewModel(MainWindow Window) {
             this.Window = Window;
+            MsgPrinterVM = new MsgPrinterViewModel(Window);
             searchTimer.Elapsed += (sender, args) => Search(SearchText);
-            displayDownTextHide.Elapsed += (sender, args) => { DisplayDownText = ""; };
+            //Слой для результатов поиска
             SearchResultVector = new VectorLayer();
             SearchResultVector.Data = new MapItemStorage();
-            /*Window.mapControl.SelectionChanged += (sender, args) =>
-            {
-                Console.WriteLine(args.Selection.Count);
-            };*/
-            Layers.CollectionChanged += Layers_CollectionChanged;
             Window.mapControl.Layers.Add(SearchResultVector);
+            Window.mapControl.SelectionMode = ElementSelectionMode.None;
+
+
+            ServiceLayerVector = new VectorLayer();
+            ServiceLayerVector.Data = new MapItemStorage();
+
+            Window.mapControl.Layers.Add(ServiceLayerVector);
+            Window.mapControl.PreviewMouseDown += (s, e) => {
+                CoordPoint p = Window.mapControl.ScreenPointToCoordPoint(e.GetPosition(Window.mapControl));
+                if (Keyboard.Modifiers == ModifierKeys.Control){
+                    CoordPosLon = p.GetX();
+                    CoordPosLat = p.GetY();
+                    OnPropertyChanged("CoordPosLon");
+                    OnPropertyChanged("CoordPosLat");
+                }
+                if (Keyboard.Modifiers == ModifierKeys.Shift){
+                    if (IsFindRect) {
+                        Window.mapControl.EnableRotation = false;
+                        Window.mapControl.EnableScrolling = false;
+                        MapPolygonSelection.Visible = true;
+                        var storage = (ServiceLayerVector.Data as MapItemStorage).Items;
+                        for (int i = storage.Count - 1; i >= 0; i--)
+                            if (storage[i] is MapDot)
+                                storage.RemoveAt(i);
+                        if (e.ChangedButton == MouseButton.Left)
+                            MapPolygonSelection.Points.Add(p);
+                        if (e.ChangedButton == MouseButton.Right && MapPolygonSelection.Points.Count > 0)
+                            MapPolygonSelection.Points.RemoveAt(MapPolygonSelection.Points.Count - 1);
+                        foreach (var pnt in MapPolygonSelection.Points)
+                            storage.Add(new MapDot() {
+                                Location = pnt,
+                                Size = 15,
+                                Fill = new SolidColorBrush(Color.FromArgb(80, 3, 32, 252)),
+                                Stroke = new SolidColorBrush(Color.FromArgb(255, 3, 32, 252))
+                            });
+                    }
+
+                    if (IsFindCircle){
+                        RadPosLon = p.GetX();
+                        RadPosLat = p.GetY();
+                    }
+                }
+            };
+            Window.mapControl.PreviewMouseUp+= (s, e) =>{
+                Window.mapControl.EnableRotation = true;
+                Window.mapControl.EnableScrolling= true;
+            };
+            Layers.CollectionChanged += Layers_CollectionChanged;
             AddressesResults = new ObservableCollection<MapObject>();
             //Камеру на выбранный адрес
             Window.lb_searchBox.PreviewMouseUp += (o, e) =>{                
@@ -484,14 +655,16 @@ public void SearchObjects(string json){
                         {
                             string err = "Произошла на сервере. Код: " +
                                                   task.Result.StatusCode.ToString() + " Ответ :" + res.ToString();
-                            DisplayDownText = err;
+
+                            MsgPrinterVM.Error(err, 10000);
                             Utils.pushCrashLog(new Exception(err));
                             WaitVMM.WaitVisible = false;
                             return;
                         }
                         if (string.IsNullOrWhiteSpace(res))
                         {
-                            Utils.MsgBoxInfo("Не найдено ни одного объекта");
+
+                            MsgPrinterVM.Warning("Не найдено ни одного объекта", 5000);
                             WaitVMM.WaitVisible = false;
                             return;
                         }
@@ -503,7 +676,7 @@ public void SearchObjects(string json){
                             }
                             catch (Exception ex)
                             {
-                                DisplayDownText = "Произошла ошибка при обработке запроса  " + ex.Message;
+                                MsgPrinterVM.Error("Произошла ошибка при обработке запроса  " + ex.Message, 10000);
                                 Utils.pushCrashLog(ex);
                             }
 
@@ -548,14 +721,14 @@ public void SearchObjects(string json){
                                         }
                                         catch (Exception ex)
                                         {
-                                            DisplayDownText = "Произошла ошибка при обработке запроса Nominatim. " + ex.Message;
+
+                                            MsgPrinterVM.Error("Произошла ошибка при обработке запроса Nominatim. " + ex.Message, 10000);
                                             Utils.pushCrashLog(ex);
                                         }
                                     }));
                                 }
-                                catch (Exception e)
-                                {
-                                    DisplayDownText = "Произошла ошибка при запросе на Nominatim. " + e.Message;
+                                catch (Exception e){
+                                    MsgPrinterVM.Error("Произошла ошибка при запросе на Nominatim. " + e.Message, 10000);
                                     Utils.pushCrashLog(e);
                                     WaitVMM.WaitVisible = false;
                                     //throw e;
@@ -593,10 +766,11 @@ public void SearchObjects(string json){
                 else
                 {
                     if (task.Exception != null)
-                        DisplayDownText = "Произошла ошибка запроса " +
-                                          task.Exception.GetBaseException().Message;
+
+                        MsgPrinterVM.Error("Произошла ошибка запроса " +
+                                          task.Exception.GetBaseException().Message, 10000);
                     else
-                        DisplayDownText = "Произошла ошибка запроса!";
+                        MsgPrinterVM.Error("Произошла ошибка запроса!", 10000);
                     WaitVMM.WaitVisible = false;
                 }
             });
@@ -615,6 +789,26 @@ public void SearchObjects(string json){
                        }));
             }
         }
+        private RelayCommand selectFromUserTags;
+        public RelayCommand SelectFromUserTags{
+            get{
+                return selectFromUserTags ??
+                       (selectFromUserTags = new RelayCommand(obj =>{
+                           AddUserTags aut = new AddUserTags();
+                           if (aut.ShowDialog().GetValueOrDefault(false)){
+                               var vm = aut.DataContext as AddUserTagsViewModel;
+                               var t = vm.ItemsStringArray;
+                               if (t.Count == 0) {
+                                   MsgPrinterVM.Warning("Не указано ни одного тега!", 5000);
+                                   return;
+                               }
+
+                               var json = JsonConvert.SerializeObject(t);
+                               SearchObjects(json);
+                           }
+                       }));
+            }
+        }
         private RelayCommand selectFromDicts;
         public RelayCommand SelectFromDicts
         {
@@ -629,7 +823,7 @@ public void SearchObjects(string json){
                                var vm = sel.DataContext as SelectorViewModel;
                                var t = vm.CheckedItems;
                                if (t.Count == 0) {
-                                   Utils.MsgBoxWarning("Не указано ни одного тега!");
+                                   MsgPrinterVM.Warning("Не указано ни одного тега!", 5000);
                                    return;
                                }
 
@@ -787,10 +981,7 @@ public void SearchObjects(string json){
                 return gotoPoint ??
                        (gotoPoint = new RelayCommand(obj =>
                        {
-                           MsgPrinterVM.Warning("что лалалалал","eeeeeeeeeeeeeeeeeeeeee eeeeeeeeeeeee eeeeeeeeeeeeeee eeeeeeeeeeee");
-                           MsgPrinterVM.Error("что лалалалал1 213313 12 3 21");
-                           MsgPrinterVM.Info("Hello world!");
-                           MsgPrinterVM.Success("!!!Hello world!");
+
                            Window.mapControl.CenterPoint = new GeoPoint(CoordPosLat,CoordPosLon);
 
                        }));
