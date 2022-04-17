@@ -5,26 +5,27 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
 using OsmMapViewer.Misc;
 
+
 namespace OsmMapViewer.Models
 {
-    public class LayerData: VectorLayer, INotifyPropertyChanged
-    {
+    [Serializable]
+    public class LayerData: VectorLayer, INotifyPropertyChanged, ISerializable{
 
+        public string TypeData { get; set; } = "map";//map - слой выборки, draw - слой рисования
+        public string ID = Utils.GetTimestamp();
         private string _DisplayName = "";
-        public string DisplayName
-        {
-            get
-            {
+        public string DisplayName{
+            get{
                 return _DisplayName;
             }
-            set
-            {
+            set {
                 _DisplayName= value;
                 OnPropertyChanged("DisplayName");
             }
@@ -106,38 +107,46 @@ namespace OsmMapViewer.Models
             }
         }
 
-        public LayerData()
+        private void InitData()
         {
             this.mapItemStorage = new MapItemStorage();
             this.Data = this.mapItemStorage;
             Objects.CollectionChanged += Objects_CollectionChanged;
-            this.EnableSelection = false;
+            this.EnableSelection = true;
             this.EnableHighlighting = false;
             this.ToolTipEnabled = false;
         }
+        public LayerData(){
+            InitData();
+        }
 
+        private int __clickTimestamp = 0;
         private void Objects_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e){
             switch (e.Action.ToString()){
                 case "Add":
                     foreach (var eNewItem in e.NewItems)
                     {
+                        var item = eNewItem as MapObject;
                         var geom = ((MapObject) eNewItem).Geometry;
-                        Utils.ApplyStyle(geom,
-                            new SolidColorBrush(Color.FromArgb(180, 255, 0, 0)),
-                            new SolidColorBrush(Color.FromArgb(40, 255, 0, 0)),
-                            new SolidColorBrush(Color.FromArgb(180, 255, 0, 0)),
-                            new SolidColorBrush(Color.FromArgb(40, 255, 0, 0)),
-                            new SolidColorBrush(Color.FromArgb(255, 255, 0, 0)),
-                            new SolidColorBrush(Color.FromArgb(60, 255, 0, 0)),
-                            18,
-                            new StrokeStyle()
+                        if (geom != null){
+                            geom.CanMove = false;
+                            if (IsShowGeometry) 
+                                this.mapItemStorage.Items.Add(geom);
+                            if (TypeData == "draw")
                             {
-                                Thickness = 2
-                            });
-                        geom.CanMove = false;
-                        if(IsShowGeometry)
-                            this.mapItemStorage.Items.Add(geom);
-                        if(IsShowPushpin)
+                                geom.MouseLeftButtonDown += (o, args) =>
+                                {
+                                    __clickTimestamp = args.Timestamp;
+                                };
+                                geom.MouseLeftButtonUp += (o, args) =>
+                                {
+                                    if (args.Timestamp - __clickTimestamp <= 250)
+                                        OnClickDrawObject(item);
+                                };
+                            }
+                        }
+
+                        if(IsShowPushpin && ((MapObject)eNewItem).MapCenter !=null)
                             this.mapItemStorage.Items.Add(((MapObject)eNewItem).MapCenter);
                     }
 
@@ -146,7 +155,7 @@ namespace OsmMapViewer.Models
                     this.mapItemStorage.Items.Clear();
                     break;
                 case "Remove":
-                    foreach (var eNewItem in e.NewItems){
+                    foreach (var eNewItem in e.OldItems){
                         if(IsShowPushpin)
                             this.mapItemStorage.Items.Remove(((MapObject) eNewItem).MapCenter);
                         if (IsShowGeometry)
@@ -157,7 +166,8 @@ namespace OsmMapViewer.Models
            }
         }
 
-            private RelayCommand hide;
+
+        private RelayCommand hide;
             public RelayCommand Hide
             {
                 get
@@ -176,5 +186,36 @@ namespace OsmMapViewer.Models
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
+        public void GetObjectData(SerializationInfo info, StreamingContext context){
+            info.AddValue("ID", ID, typeof(string));
+            info.AddValue("DisplayName", DisplayName, typeof(string));
+            info.AddValue("IsShowPushpin", IsShowPushpin, typeof(bool));
+            info.AddValue("IsShowGeometry", IsShowGeometry, typeof(bool));
+            info.AddValue("Objects", Objects);
+        }
+
+        [OnDeserialized]
+        private void SetValuesOnDeserialized(StreamingContext context)
+        {
+            if(_beforeLoadObject != null)
+                foreach (var c in _beforeLoadObject) 
+                    Objects.Add(c);
+        }
+
+        private ObservableCollection<MapObject> _beforeLoadObject = null;
+        protected LayerData(SerializationInfo info, StreamingContext context){
+            InitData();
+            ID = (string)info.GetValue("ID", typeof(string));
+            DisplayName = (string)info.GetValue("DisplayName", typeof(string));
+            IsShowPushpin = (bool)info.GetValue("IsShowPushpin", typeof(bool));
+            IsShowGeometry = (bool)info.GetValue("IsShowGeometry", typeof(bool));
+            _beforeLoadObject = (ObservableCollection<MapObject>) info.GetValue( "Objects", typeof(object));
+        }
+
+        public event Action<MapObject> ClickDrawObject;
+        protected virtual void OnClickDrawObject(MapObject obj) {
+            ClickDrawObject?.Invoke(obj); 
+        }
     }
+
 }

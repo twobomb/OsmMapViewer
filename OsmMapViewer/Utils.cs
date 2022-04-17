@@ -11,12 +11,16 @@ using Newtonsoft.Json.Linq;
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Reflection;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using DevExpress.Map;
 using DevExpress.Xpf.Map;
+using Newtonsoft.Json;
 using Color = System.Windows.Media.Color;
 using OsmMapViewer.Misc;
+using OsmMapViewer.Properties;
 
 namespace OsmMapViewer
 {
@@ -35,6 +39,22 @@ namespace OsmMapViewer
             catch            {
                     url = url.Replace("&", "^&");
                     Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+            }
+        }
+
+        public static string PointToTextGeometry(List<CoordPoint> list, string type = "POLYGON"){
+            type = type.ToUpper();
+            switch (type){
+                case "POLYGON":
+                    if (list[0].GetY() != list[list.Count - 1].GetY() || list[0].GetX() != list[list.Count - 1].GetX()){
+                        list = list.ToArray().ToList();
+                        list.Add(list.First());
+                    }
+
+                    return String.Format("POLYGON(({0}))",string.Join(",", list.Select(point => point.GetX().ToString().Replace(',','.')+" " + point.GetY().ToString().Replace(',','.'))));
+                    break;
+                default:
+                    throw new Exception("Неизвестный тип " + type);
             }
         }
         public static BitmapImage GetImageFromStream(Stream s){
@@ -175,6 +195,140 @@ namespace OsmMapViewer
             return vl;
         }
 
+        public static Brush GetStrokeStyle(MapItem item){
+            return GetPropertyObject<Brush>(item,"Stroke");
+        }
+
+        public static T DeserializeJson<T>(string toDeserialize)
+        {
+            return JsonConvert.DeserializeObject<T>(toDeserialize);
+        }
+
+        public static string SerializeJson<T>(T toSerialize)
+        {
+            return JsonConvert.SerializeObject(toSerialize);
+        }
+        public static void SetKitSelectionList(List<KitSelection> list) {
+            Settings.Default.KitSelections = SerializeJson(list);
+            Settings.Default.Save();
+        }
+        public static List<KitSelection> GetKitSelectionList() {
+            List<KitSelection> list = null;
+            try {
+                list = DeserializeJson<List<KitSelection>>(Settings.Default.KitSelections);
+            }
+            catch (Exception e){
+                Utils.pushCrashLog(e);
+                Settings.Default.KitSelections = "";
+                Settings.Default.Save();
+            }
+
+            if (list == null)
+                list = new List<KitSelection>();
+            return list;
+        }
+        public static MapItem ApplyStrokeStyle(MapItem item, Brush stroke){
+            SetPropertyObject<Brush>(item, "Stroke", stroke);
+            return item;
+        }
+        public static Brush GetFillStyle(MapItem item) {
+            return GetPropertyObject<Brush>(item, "Fill");
+        }
+
+        public static T GetPropertyObject<T>(object obj,string propertyName) where T: class{
+            foreach (var attr in obj.GetType().GetProperties())
+                if (attr.Name == propertyName && attr.PropertyType == typeof(T))
+                    return (T)attr.GetValue(obj);
+            return null;
+        }
+        public static bool SetPropertyObject<T>(object obj,string propertyName, object value) where T:class{
+            foreach (var attr in obj.GetType().GetProperties())
+                if (attr.Name == propertyName && attr.PropertyType == typeof(T)) {
+                    attr.SetValue(obj, value);
+                    return true;
+                }
+            return false;
+        }
+        public static MapItem ApplyFillStyle(MapItem item, Brush fill) {
+            SetPropertyObject<Brush>(item, "Fill", fill);
+            return item;
+        }
+
+        public static string ByteToString(byte[] b) {
+            return System.Convert.ToBase64String(b);
+        }
+        public static byte[] StringToByte(string s) {
+            return System.Convert.FromBase64String(s);
+        }
+        public static List<LayerData> LoadLayers()
+        {
+            if (string.IsNullOrWhiteSpace(Settings.Default.Layers))
+                return new List<LayerData>();
+            try
+            {
+                BinaryFormatter bf = new BinaryFormatter();
+                using (MemoryStream ms = new MemoryStream(StringToByte(Settings.Default.Layers))){
+                    return (List<LayerData>)bf.Deserialize(ms);
+                }
+            }
+            catch (Exception e)
+            {
+                Utils.pushCrashLog(e);
+            }
+            return new List<LayerData>();
+        }
+        public static void SaveLayers(List<LayerData> data) {
+            BinaryFormatter bf = new BinaryFormatter();
+            using (MemoryStream ms = new MemoryStream()) {
+                bf.Serialize(ms, data);
+                Settings.Default.Layers =  Utils.ByteToString(ms.ToArray());
+                Settings.Default.Save();
+            }
+        }
+        public static String GetTimestamp(DateTime? value = null) {
+            return value.GetValueOrDefault(DateTime.Now).ToString("yyyyMMddHHmmssffff");
+        }
+        public static string SerializeGeoPoint(GeoPoint b) {
+            if (b == null)
+                return null;
+            return $"{b.GetX()};{b.GetY()}";
+        }
+
+        public static SolidColorBrush HexToColorBrush(string hex) {
+            return new SolidColorBrush((Color)ColorConverter.ConvertFromString(hex));
+        }
+        public static string ColorBrushToHex(SolidColorBrush brush){
+            return brush.Color.ToString();
+        }
+        public static GeoPoint DeSerializeGeoPoint(string s) {
+            if (string.IsNullOrWhiteSpace(s))
+                return null;
+            var q = s.Split(new[] {';'}).Select(s1 => Utils.ParseDouble(s1)).ToArray();
+            return new GeoPoint(q[1],q[0]);
+        }
+        public static string SerializeBrush(SolidColorBrush b) {
+            if (b == null)
+                return null;
+            return $"{b.Color.A};{b.Color.R};{b.Color.G};{b.Color.B}";
+        }
+        public static SolidColorBrush DeSerializeBrush(string s) {
+            if (string.IsNullOrWhiteSpace(s))
+                return null;
+            var q = s.Split(new[] {';'}).Select(s1 => byte.Parse(s1)).ToArray();
+            return new SolidColorBrush(Color.FromArgb(q[0],q[1],q[2],q[3]));
+        }
+        public static double GetBorderSize(MapItem item)
+        {
+            return GetPropertyObject<StrokeStyle>(item, "StrokeStyle").Thickness;
+        }
+        public static MapItem ApplyBorderSize(MapItem item, double size)
+        {
+            SetPropertyObject<StrokeStyle>(item, "StrokeStyle", new StrokeStyle()
+            {
+                Thickness = size
+            });
+            return item;
+        }
         public static MapItem ApplyStyle(MapItem item,Brush stroke, Brush fill,Brush selectedStroke, Brush selectedFill,Brush hightlightStroke, Brush hightlightFill, double dotSize , StrokeStyle ss){
             if (item is MapPolygon mp) {
                 mp.Stroke= stroke;

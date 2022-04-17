@@ -41,8 +41,8 @@ function getBBoxFromGeoJson($json,$cc = 0.0001){//$cc минимальная ш�
 }
 
 if($_SERVER["REQUEST_METHOD"] == "POST"):
-	$tags = json_decode(file_get_contents('php://input'));
-	
+	$data = json_decode(file_get_contents('php://input'),true);
+	$tags = $data["tags"];
 
 $dbconn = pg_connect("host=$DB_HOST dbname=$DB_NAME user=$DB_USER password=$DB_PWD");
 if($dbconn === false){
@@ -54,11 +54,20 @@ $tables =[];
 
 try{
 
-if(!isset($_GET["line"]) || $_GET["line"] == "1")
+$add_query1 = "";
+if(isset($data["restrict_polygon"]))
+	$add_query1 = " AND ST_Within(ST_TRANSFORM(way,4326), ST_GeomFromText('".$data["restrict_polygon"]."', 4326)) ";
+$add_query2 = "";
+if(isset($data["restrict_point_radius"]))
+	$add_query2 = " AND ST_Within(ST_Transform(way,4326),ST_Buffer(ST_GeomFromText('POINT(".$data["restrict_point_radius"]["lon"]." ".$data["restrict_point_radius"]["lat"].")', 4326)::geography,".$data["restrict_point_radius"]["radius_meter"].",'quad_segs=50' )::geometry)  ";//Чем больше quad_segs тем плавнее геометрия круга и тем дольше вычисления
+	
+	
+	
+if(!isset($data["params"]["line"]) || $data["params"]["line"] == "1")
 	$tables["planet_osm_line"] =[];
-if(!isset($_GET["polygon"]) || $_GET["polygon"] == "1")
+if(!isset($data["params"]["polygon"]) || $data["params"]["polygon"] == "1")
 	$tables["planet_osm_polygon"] =[];
-if(!isset($_GET["point"]) || $_GET["point"] == "1")
+if(!isset($data["params"]["point"]) || $data["params"]["point"] == "1")
 	$tables["planet_osm_point"] =[];
 
 foreach ($tables as $key=>$v){
@@ -109,7 +118,7 @@ foreach ($tables as $key=>$cols){
 		}
 		array_push($exps," lower($col) $oper ($v) ");
 	}
-	$query = "$q ".implode("OR",$exps);
+	$query = "$q (".implode("OR",$exps).") ".$add_query1." ".$add_query2;
 	$result = pg_query($query) or die('Query failed: ' . pg_last_error());
 	
 	$tempArr = [];

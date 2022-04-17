@@ -39,7 +39,7 @@
                         <dxb:BarStaticItem  Glyph="{dx:DXImage SvgImages/Format/ListNumbers.svg}" Content="{Binding CountTagsAdded}"/>
                     </dxr:RibbonPageGroup>
                     <dxr:RibbonPageGroup Caption="Действия">
-                        <dxb:BarButtonItem ItemClick="BarButtonItem_ItemClick_1" Content="Начать поиск" RibbonStyle="Large" Glyph="{dx:DXImage SvgImages/Dashboards/EnableSearch.svg}"/>
+                        <dxb:BarButtonItem ItemClick="BarButtonItem_ItemClick_1" Content="Подтвердить" RibbonStyle="Large" Glyph="{dx:DXImage SvgImages/Content/CheckBox.svg}"/>
                         <dxb:BarButtonItem ItemClick="BarButtonItem_ItemClick" Margin="15 0 0 0" Content="Закрыть" RibbonStyle="Large" Glyph="{dx:DXImage SvgImages/RichEdit/CloseHeaderAndFooter.svg}"/>
 
                     </dxr:RibbonPageGroup>

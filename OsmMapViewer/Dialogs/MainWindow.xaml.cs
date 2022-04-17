@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -16,6 +18,7 @@ using DevExpress.Map;
 using DevExpress.Xpf.Core;
 using DevExpress.Xpf.Map;
 using OsmMapViewer.Misc;
+using OsmMapViewer.Models;
 using OsmMapViewer.ViewModel;
 
 namespace OsmMapViewer
@@ -23,22 +26,19 @@ namespace OsmMapViewer
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : ThemedWindow
-    {
+    public partial class MainWindow : ThemedWindow{
 
-        public MainWindow()
-        {
+        public MainWindow(){
             System.Net.ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
 
             InitializeComponent();
             DataContext = new MainWindowViewModel(this);
 
             this.Loaded += MainWindow_Loaded;
-
-
         }
 
         private void MainWindow_Loaded(object sender, RoutedEventArgs e) {
+            
             mapControl.MinZoomLevel = 1;
             mapControl.MaxZoomLevel = 18;
             mapControl.ShowSearchPanel = true;

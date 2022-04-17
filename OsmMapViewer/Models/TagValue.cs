@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace OsmMapViewer.Models
 {
+    [Serializable]
     public class TagValue
     {
         public string Tag { get; set; }

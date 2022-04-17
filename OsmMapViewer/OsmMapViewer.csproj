@@ -87,6 +87,9 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Dialogs\AddKitSelectionDlg.xaml.cs">
+      <DependentUpon>AddKitSelectionDlg.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Dialogs\AddUserTags.xaml.cs">
       <DependentUpon>AddUserTags.xaml</DependentUpon>
     </Compile>
@@ -95,6 +98,9 @@
     <Compile Include="Dialogs\FluentSplashScreen\SplashScreen.xaml.cs">
       <DependentUpon>SplashScreen.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Dialogs\ShowLayersDlg.xaml.cs">
+      <DependentUpon>ShowLayersDlg.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Misc\Config.cs" />
     <Compile Include="Misc\MsgPrinter.xaml.cs">
       <DependentUpon>MsgPrinter.xaml</DependentUpon>
@@ -102,6 +108,7 @@
     <Compile Include="Misc\RelayCommand.cs" />
     <Compile Include="Misc\WindowBlur.cs" />
     <Compile Include="Models\DataMsgPrinter.cs" />
+    <Compile Include="Models\KitSelection.cs" />
     <Compile Include="Models\LayerData.cs" />
     <Compile Include="Models\MapObject.cs" />
     <Compile Include="Models\TagValue.cs" />
@@ -117,6 +124,10 @@
     <Compile Include="ViewModel\SelectorViewModel.cs" />
     <Compile Include="ViewModel\ViewModelBase.cs" />
     <Compile Include="ViewModel\WaitViewModel.cs" />
+    <Page Include="Dialogs\AddKitSelectionDlg.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Dialogs\AddUserTags.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -138,6 +149,10 @@
       <SubType>Code</SubType>
     </Compile>
     <Page Include="Dialogs\Selector.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Dialogs\ShowLayersDlg.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
