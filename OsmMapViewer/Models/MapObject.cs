@@ -23,9 +23,8 @@ namespace OsmMapViewer.Models {
 
         public MapPushpin MapCenter {
             get {
-                if (mapCenter == null && CenterPoint != null && TypeData == "map")
-                    mapCenter = new MapPushpin()
-                    {
+                if (mapCenter == null && CenterPoint != null && TypeData != "draw")
+                    mapCenter = new MapPushpin(){
                         Location = CenterPoint, Brush = new SolidColorBrush(Color.FromRgb(0, 27, 232)),
                         EnableSelection = false
                     };
@@ -33,12 +32,13 @@ namespace OsmMapViewer.Models {
             }
         }
 
-        public string TypeData { get; set; } = "map";//map - слой выборки, draw - слой рисования
+        public string TypeData { get; set; } = "map";//map - слой выборки, draw - слой рисования,search - слой поиска
         public string PlaceId { get; set; }
         public string OsmId { get; set; }
         public string Type { get; set; }
         public string Class { get; set; }
         public string DisplayName { get; set; }
+        public LayerData Layer { get; set; } 
 
         public string DisplayNameLabel
         {

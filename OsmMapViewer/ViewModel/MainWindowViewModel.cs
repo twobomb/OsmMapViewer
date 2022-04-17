@@ -668,6 +668,11 @@ public Decimal SizeBorderDrawing {
 
         public MainWindowViewModel(MainWindow Window) {
             this.Window = Window;
+            Window.KeyUp += (sender, args) =>
+            {
+                if(args.Key == Key.Delete)
+                    RemoveSelectedLayer.Execute(null);
+            };
             MsgPrinterVM = new MsgPrinterViewModel(Window);
             searchTimer.Elapsed += (sender, args) => Search(SearchText);
             //Слой для результатов поиска
@@ -911,11 +916,11 @@ public Decimal SizeBorderDrawing {
             AddressesResults.CollectionChanged+= (arr,ee)=>{
                 switch (ee.Action.ToString())                {
                     case "Add":
-                        foreach(var ss in arr as IEnumerable<object>)
+                        foreach(var ss in ee.NewItems)
                             if (ss is MapObject mo) {
+                                mo.TypeData = "search";
                                 //(SearchResultVector.Data as MapItemStorage).Items.Add(mo.Geometry);
-                                if (mo.GetType() != typeof(MapDot))
-                                    (SearchResultVector.Data as MapItemStorage).Items.Add(mo.MapCenter);
+                                (SearchResultVector.Data as MapItemStorage).Items.Add(mo.MapCenter);
                             }
                         break;
                     case "Reset":
@@ -923,11 +928,10 @@ public Decimal SizeBorderDrawing {
                         SelectedAddress = null;
                         break;
                     case "Remove":
-                        foreach (var ss in arr as IEnumerable<object>)
+                        foreach (var ss in ee.OldItems)
                             if (ss is MapObject mo1){
                                  //(SearchResultVector.Data as MapItemStorage).Items.Remove(mo1.Geometry);
-                                if (mo1.GetType() != typeof(MapDot))
-                                        (SearchResultVector.Data as MapItemStorage).Items.Add(mo1.MapCenter);
+                                (SearchResultVector.Data as MapItemStorage).Items.Remove(mo1.MapCenter);
                                 }
                         break;
                 }
@@ -1525,6 +1529,28 @@ public void SearchObjects(string json){
                                    Json = dlg.Json
                                };
                                KitSelectionList.Add(ks);
+                           }
+                       }));
+            }
+        }
+        private RelayCommand removeSelectedLayer;
+        public RelayCommand RemoveSelectedLayer {
+            get {
+                return removeSelectedLayer ??
+                       (removeSelectedLayer = new RelayCommand(obj => {
+                           if (SelectedMapObject != null)
+                           {
+                               if (SelectedMapObject.TypeData == "search")
+                               {
+                                   AddressesResults.Remove(SelectedMapObject);
+                                   SelectedMapObject = null;
+                               }else if (SelectedMapObject.Layer == null)
+                                   MsgPrinterVM.Error("Не удалось найти слой привязки");
+                               else
+                               {
+                                   SelectedMapObject.Layer.Objects.Remove(SelectedMapObject);
+                                   SelectedMapObject = null;
+                               }
                            }
                        }));
             }

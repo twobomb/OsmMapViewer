@@ -124,9 +124,9 @@ namespace OsmMapViewer.Models
         private void Objects_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e){
             switch (e.Action.ToString()){
                 case "Add":
-                    foreach (var eNewItem in e.NewItems)
-                    {
+                    foreach (var eNewItem in e.NewItems) {
                         var item = eNewItem as MapObject;
+                        item.Layer = this;
                         var geom = ((MapObject) eNewItem).Geometry;
                         if (geom != null){
                             geom.CanMove = false;
@@ -153,10 +153,13 @@ namespace OsmMapViewer.Models
                     break;
                 case "Reset":
                     this.mapItemStorage.Items.Clear();
+                    foreach (var eOldItem in e.OldItems)
+                        ((MapObject) eOldItem).Layer = null;
                     break;
                 case "Remove":
                     foreach (var eNewItem in e.OldItems){
-                        if(IsShowPushpin)
+                        ((MapObject) eNewItem).Layer = null;
+                        if (IsShowPushpin)
                             this.mapItemStorage.Items.Remove(((MapObject) eNewItem).MapCenter);
                         if (IsShowGeometry)
                             this.mapItemStorage.Items.Remove(((MapObject) eNewItem).Geometry);

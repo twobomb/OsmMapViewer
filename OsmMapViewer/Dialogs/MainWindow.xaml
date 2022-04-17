@@ -579,6 +579,17 @@
         <dxr:RibbonStatusBarControl Grid.Row="2">
             <dxr:RibbonStatusBarControl.LeftItems>
                 <dxb:BarButtonItem Content="{Binding SelectedMapObjectTitle}" Glyph="{dx:DXImage SvgImages/PDF Viewer/SelectAll.svg}" Command="{Binding FocusOnSelectedMapObject}"/>
+                <dxb:BarButtonItem Command="{Binding RemoveSelectedLayer}" Content="Удалить выделенный слой" Glyph="{dx:DXImage SvgImages/Icon Builder/Actions_DeleteCircled.svg}">
+                    <dxb:BarButtonItem.Style>
+                        <Style TargetType="dxb:BarButtonItem">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding SelectedMapObject}" Value="{x:Null}">
+                                    <Setter Property="IsVisible" Value="False"></Setter>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </dxb:BarButtonItem.Style>
+                </dxb:BarButtonItem>
             </dxr:RibbonStatusBarControl.LeftItems>
 
             <dxr:RibbonStatusBarControl.Style>
