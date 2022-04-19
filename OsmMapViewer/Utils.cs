@@ -182,10 +182,7 @@ namespace OsmMapViewer
         }
 
 
-        public static MapShape ParseGeoJson(string geojson)
-        {
-            return null;
-        }
+
         
         public static VectorLayer VectorLayerFromMapObjects(List<MapObject> list)        {
             VectorLayer vl = new VectorLayer();
@@ -264,8 +261,7 @@ namespace OsmMapViewer
         {
             if (string.IsNullOrWhiteSpace(Settings.Default.Layers))
                 return new List<LayerData>();
-            try
-            {
+            try {
                 BinaryFormatter bf = new BinaryFormatter();
                 using (MemoryStream ms = new MemoryStream(StringToByte(Settings.Default.Layers))){
                     return (List<LayerData>)bf.Deserialize(ms);
@@ -303,7 +299,7 @@ namespace OsmMapViewer
         public static GeoPoint DeSerializeGeoPoint(string s) {
             if (string.IsNullOrWhiteSpace(s))
                 return null;
-            var q = s.Split(new[] {';'}).Select(s1 => Utils.ParseDouble(s1)).ToArray();
+            var q = s.Split(new[] {';'}).Select(Utils.ParseDouble).ToArray();
             return new GeoPoint(q[1],q[0]);
         }
         public static string SerializeBrush(SolidColorBrush b) {
@@ -314,7 +310,7 @@ namespace OsmMapViewer
         public static SolidColorBrush DeSerializeBrush(string s) {
             if (string.IsNullOrWhiteSpace(s))
                 return null;
-            var q = s.Split(new[] {';'}).Select(s1 => byte.Parse(s1)).ToArray();
+            var q = s.Split(new[] {';'}).Select(byte.Parse).ToArray();
             return new SolidColorBrush(Color.FromArgb(q[0],q[1],q[2],q[3]));
         }
         public static double GetBorderSize(MapItem item)
@@ -415,12 +411,43 @@ namespace OsmMapViewer
             return list;
         }
 
+        //MapItem to geojson с моим типом mapellipse
+        public static string GeoJsonFromObject(MapItem mi){
+            string geojson = "";
+            if (mi is MapPolygon mp) 
+                return "{ \"type\": \"Polygon\", \"coordinates\": ["+
+                       JsonConvert.SerializeObject(mp.Points.Select(point => new double[] { point.GetX(), point.GetY() }).ToArray())
+                       + "]}";
+
+            if (mi is MapPolyline mpl) 
+                return "{ \"type\": \"LineString\", \"coordinates\": " +
+                       JsonConvert.SerializeObject(mpl.Points.Select(point => new double[] { point.GetX(), point.GetY() }).ToArray())
+                       + "}";
+
+            if (mi is MapDot md) 
+                return "{ \"type\": \"Point\", \"coordinates\": " +
+                       JsonConvert.SerializeObject(new double[]{md.Location.GetX(), md.Location.GetY()})
+                       + "}";
+            if (mi is MapEllipse me) 
+                return "{ \"type\": \"MapEllipse\", \"coordinates\": " +
+                       JsonConvert.SerializeObject(new double[] { me.Location.GetX(), me.Location.GetY(), me.Width,me.Height })
+                       + "}";
+            return geojson;
+
+        }
         public static MapItem MapItemFromGeoJson(string json){
             if (string.IsNullOrWhiteSpace(json))
                 return null;
             dynamic geojson = JObject.Parse(json);
             MapItem item = null;
-            if (geojson.type == "Polygon")
+            if (geojson.type == "MapEllipse")//мой тип
+            {
+                MapEllipse ellipse = new MapEllipse();
+                ellipse.Location = new GeoPoint(Utils.ParseDouble(geojson.coordinates[1].ToString()),Utils.ParseDouble(geojson.coordinates[0].ToString()));
+                ellipse.Width= Utils.ParseDouble(geojson.coordinates[2].ToString());
+                ellipse.Height= Utils.ParseDouble(geojson.coordinates[3].ToString());
+                item = ellipse;
+            }else if (geojson.type == "Polygon")
             {
                 MapPolygon poly = new MapPolygon();
                 foreach (var coord in geojson.coordinates[0])
@@ -429,7 +456,10 @@ namespace OsmMapViewer
             }
             else if (geojson.type == "Point")
             {
-                MapDot dot = new MapDot();
+                MapDot dot = new MapDot()
+                {
+                    Size = Config.DEFAULT_DOT_SIZE
+                };
                 dot.Location = new GeoPoint(Utils.ParseDouble(geojson.coordinates[1].ToString()), Utils.ParseDouble(geojson.coordinates[0].ToString()));
                 item = dot;
             }

@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.Data;
+using System.Drawing.Printing;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -13,13 +15,20 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Media3D;
 using System.Windows.Threading;
+using DevExpress.ClipboardSource.SpreadsheetML;
 using DevExpress.Map;
+using DevExpress.Xpf.Grid;
 using DevExpress.Xpf.Map;
+using DevExpress.Xpf.Printing;
+using DevExpress.XtraPrinting.Native;
+using DevExpress.XtraReports.UI;
 using Newtonsoft.Json;
 using OsmMapViewer.Dialogs;
 using OsmMapViewer.Misc;
 using OsmMapViewer.Models;
+using Size = System.Drawing.Size;
 using Timer = System.Timers.Timer;
 
 namespace OsmMapViewer.ViewModel
@@ -80,7 +89,8 @@ public Color FillDrawing {
     {
         if (SetProperty(ref _FillDrawing, value)){
             if (SelectedMapObject != null && SelectedMapObject.TypeData == "draw") {
-                Utils.ApplyFillStyle(SelectedMapObject.Geometry, new SolidColorBrush(value));
+                SelectedMapObject.FillGeometry = new SolidColorBrush(value);
+                Utils.ApplyFillStyle(SelectedMapObject.Geometry, SelectedMapObject.FillGeometry);
             }
         }
     }
@@ -96,7 +106,8 @@ public Color StrokeDrawing {
     {
         if (SetProperty(ref _StrokeDrawing, value)){
             if (SelectedMapObject != null && SelectedMapObject.TypeData == "draw") {
-                Utils.ApplyStrokeStyle(SelectedMapObject.Geometry, new SolidColorBrush(value));
+                SelectedMapObject.StrokeGeometry= new SolidColorBrush(value);
+                Utils.ApplyStrokeStyle(SelectedMapObject.Geometry, SelectedMapObject.StrokeGeometry);
             }
         }
     }
@@ -111,7 +122,8 @@ public Decimal SizeBorderDrawing {
     set {
         if (SetProperty(ref _SizeBorderDrawing, value)){
             if (SelectedMapObject != null && SelectedMapObject.TypeData == "draw") {
-                Utils.ApplyBorderSize(SelectedMapObject.Geometry, (double) value);
+                SelectedMapObject.BorderGeometry = (double) value;
+                Utils.ApplyBorderSize(SelectedMapObject.Geometry, SelectedMapObject.BorderGeometry);
             }
         }
     }
@@ -246,7 +258,7 @@ public Decimal SizeBorderDrawing {
                         new SolidColorBrush(Color.FromArgb(40, 255, 0, 0)),
                         new SolidColorBrush(Color.FromArgb(255, 255, 0, 0)),
                         new SolidColorBrush(Color.FromArgb(60, 255, 0, 0)),
-                        18,
+                        Config.DEFAULT_DOT_SIZE,
                         new StrokeStyle()
                         {
                             Thickness = 3
@@ -423,7 +435,7 @@ public Decimal SizeBorderDrawing {
                         Location = new GeoPoint(RadPosLat, RadPosLon),
                         EnableSelection = false,
                         EnableHighlighting = false,
-                        Size = 15,
+                        Size = Config.DEFAULT_DOT_SIZE,
                         Fill = new SolidColorBrush(Color.FromArgb(80, 3, 32, 252)),
                         Stroke = new SolidColorBrush(Color.FromArgb(255, 3, 32, 252))
                     };
@@ -567,7 +579,7 @@ public Decimal SizeBorderDrawing {
 
         //Показать больше записей объектов выбранного слоя
         public void ShowMoreSelectedLayerList(){
-            if (SelectedLayer != null && SelectedLayer.Objects.Count > SelectedLayerList.Count){
+            if(SelectedLayer != null && SelectedLayer.Objects.Count > SelectedLayerList.Count){
                 int showCnt = SelectedLayer.Objects.Count - SelectedLayerList.Count;
                 if (showCnt > LIMIT_LOAD_LAYER_OBJECTS)
                     showCnt = LIMIT_LOAD_LAYER_OBJECTS;
@@ -651,14 +663,22 @@ public Decimal SizeBorderDrawing {
                 return _SelectedLayer;
             }
             set{
-                if(SetProperty(ref _SelectedLayer, value)){
+                if(_SelectedLayer != null && _SelectedLayer != value && _SelectedLayer.TypeData == "draw")
+                    _SelectedLayer.Objects.CollectionChanged -= Objects_CollectionChanged;
+                if (SetProperty(ref _SelectedLayer, value)){
                     SelectedLayerList.Clear();
+                    if (_SelectedLayer != null && _SelectedLayer.TypeData == "draw")
+                        _SelectedLayer.Objects.CollectionChanged += Objects_CollectionChanged;
                 }
             }
         }
 
 
-
+        private void Objects_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e){
+            SelectedLayerList.Clear();
+            ShowMoreSelectedLayerList();
+            OnPropertyChanged("ShowLayerObjectsShown");
+        }
         //Задержка поиска для autocomplete
         private Timer searchTimer = new Timer(200)
         {
@@ -688,6 +708,9 @@ public Decimal SizeBorderDrawing {
                 Utils.SetKitSelectionList(KitSelectionList.ToList());
             };
 
+            SelectedLayerList.CollectionChanged += (sender, args) =>{
+                OnPropertyChanged("ShowLayerObjectsShown");
+            };
 
             ServiceLayerVector = new VectorLayer();
             ServiceLayerVector.IsHitTestVisible = false;
@@ -711,6 +734,100 @@ public Decimal SizeBorderDrawing {
                     }
                 }
 
+                //Рисование Точки
+                if (IsDotDrawing && e.LeftButton== MouseButtonState.Pressed) {
+                        var me = new MapDot(){
+                            Stroke = new SolidColorBrush(StrokeDrawing),
+                            Fill = new SolidColorBrush(FillDrawing),
+                            Size = Config.DEFAULT_DOT_SIZE,
+                            StrokeStyle = new StrokeStyle()
+                            {
+                                Thickness = (double) SizeBorderDrawing
+                            },
+                            Location = p,
+                            CanMove = false,
+                            EnableHighlighting = true,
+                            HighlightStroke = Config.SELECT_BRUSH_BORDER,
+                            HighlightStrokeStyle = new StrokeStyle()
+                            {
+                                Thickness = 3
+                            },
+                            EnableSelection = false
+                        };
+                        SelectedDrawObject = new MapObject()
+                        {
+                            StrokeGeometry = new SolidColorBrush(StrokeDrawing),
+                            FillGeometry = new SolidColorBrush(FillDrawing),
+                            BorderGeometry = (double)SizeBorderDrawing,
+                            TypeData = "draw",
+                            CenterPoint = (GeoPoint) p,
+                            DisplayName = DrawingNameFigure,
+                            Geometry = me,
+                            RawGeoJson = Utils.GeoJsonFromObject(me)
+                };
+                        SelectedLayer.Objects.Add(SelectedDrawObject);
+                }
+
+                //Рисование линии
+                if (IsLineDrawing && e.LeftButton== MouseButtonState.Pressed) {
+                    if (!IsDrawBegin) {
+                        var me = new MapPolyline()
+                        {
+                            Stroke = new SolidColorBrush(StrokeDrawing),
+                            Fill = new SolidColorBrush(FillDrawing),
+                            StrokeStyle = new StrokeStyle()
+                            {
+                                Thickness = (double) SizeBorderDrawing
+                            },
+                            CanMove = false,
+                            EnableHighlighting = true,
+                            HighlightStroke = Config.SELECT_BRUSH_BORDER,
+                            HighlightStrokeStyle = new StrokeStyle()
+                            {
+                                Thickness = 3
+                            },
+                            EnableSelection = false
+                        };
+                        IsDrawBegin = true;
+                        DrawBeginDot = (GeoPoint) p;
+                        me.Points.Add(p);
+                        me.Points.Add(p);
+                        Window.mapControl.EnableScrolling = false;
+
+                        SelectedDrawObject = new MapObject()
+                        {
+                            StrokeGeometry = new SolidColorBrush(StrokeDrawing),
+                            FillGeometry = new SolidColorBrush(FillDrawing),
+                            TypeData = "draw",
+                            CenterPoint = (GeoPoint) p,
+                            DisplayName = DrawingNameFigure,
+                            BorderGeometry = (double)SizeBorderDrawing,
+                            Geometry = me
+                        };
+                        SelectedLayer.Objects.Add(SelectedDrawObject);
+                    }
+                    else if (SelectedMapObject != null && SelectedMapObject.Geometry is MapPolyline mp){
+                        mp.Points.Add(p);
+                        DrawBeginDot = (GeoPoint)p;
+                        SelectedMapObject.CenterPoint = (GeoPoint)mp.GetCenter();
+                    }
+                }
+                if (IsLineDrawing && IsDrawBegin && e.RightButton == MouseButtonState.Pressed){
+                    IsDrawBegin = false;
+                    (ServiceLayerVector.Data as MapItemStorage).Items.Clear();
+                    if (SelectedDrawObject.Geometry is MapPolyline pl) {
+                        pl.Points.RemoveAt(pl.Points.Count - 1);
+                        SelectedDrawObject.CenterPoint = (GeoPoint)pl.GetCenter();
+                        if (pl.Points.Count < 2)
+                        {
+                            MsgPrinterVM.Error("У линии не может быть менее двух точек");
+                            SelectedLayer.Objects.Remove(SelectedDrawObject);
+                        }
+                        else
+                            SelectedDrawObject.RawGeoJson = Utils.GeoJsonFromObject(SelectedDrawObject.Geometry);
+                    }
+                }
+
                 //рисование полигона
                 if (IsPolygonDrawing && IsDrawBegin && e.RightButton == MouseButtonState.Pressed){
                     IsDrawBegin = false;
@@ -722,6 +839,8 @@ public Decimal SizeBorderDrawing {
                             MsgPrinterVM.Error("У полигона не может быть менее трёх точек");
                             SelectedLayer.Objects.Remove(SelectedDrawObject);
                         }
+                        else
+                            SelectedDrawObject.RawGeoJson = Utils.GeoJsonFromObject(SelectedDrawObject.Geometry);
                     }
                 }
 
@@ -757,11 +876,12 @@ public Decimal SizeBorderDrawing {
                             TypeData = "draw",
                             CenterPoint = (GeoPoint) p,
                             DisplayName = DrawingNameFigure,
+                            BorderGeometry = (double)SizeBorderDrawing,
                             Geometry = me
                         };
                         SelectedLayer.Objects.Add(SelectedDrawObject);
                     }
-                    else if (SelectedMapObject.Geometry is MapPolygon polygon){
+                    else if (SelectedMapObject != null && SelectedMapObject.Geometry is MapPolygon polygon){
                         polygon.Points.Add(p);
                         if(polygon.Points.Count == 2)
                             polygon.Points.Add(p);
@@ -802,14 +922,18 @@ public Decimal SizeBorderDrawing {
                     SelectedDrawObject = new MapObject(){
                         FillGeometry = new SolidColorBrush(FillDrawing),
                         StrokeGeometry= new SolidColorBrush(StrokeDrawing),
+                        BorderGeometry = (double)SizeBorderDrawing,
                         TypeData= "draw",
                         CenterPoint = (GeoPoint) p,
                         DisplayName = DrawingNameFigure,
-                        Geometry = me
-                    };
+                        Geometry = me,
+                        RawGeoJson = Utils.GeoJsonFromObject(me)
+                };
                     SelectedLayer.Objects.Add(SelectedDrawObject);
                     
                 }
+              
+                
                 if (Keyboard.Modifiers == ModifierKeys.Control){
                     CoordPosLon = p.GetX();
                     CoordPosLat = p.GetY();
@@ -832,7 +956,7 @@ public Decimal SizeBorderDrawing {
                         foreach (var pnt in MapPolygonSelection.Points)
                             storage.Add(new MapDot() {
                                 Location = pnt,
-                                Size = 15,
+                                Size = Config.DEFAULT_DOT_SIZE,
                                 Fill = new SolidColorBrush(Color.FromArgb(80, 3, 32, 252)),
                                 Stroke = new SolidColorBrush(Color.FromArgb(255, 3, 32, 252))
                             });
@@ -846,7 +970,7 @@ public Decimal SizeBorderDrawing {
             };
             Window.mapControl.MouseMove += (sender, e) => {
                 CoordPoint p = Window.mapControl.ScreenPointToCoordPoint(e.GetPosition(Window.mapControl));
-
+                    //Динамическое рисование элипса по mousemove
                 if (IsEllipseDrawing && e.LeftButton == MouseButtonState.Pressed && IsDrawBegin && SelectedMapObject.Geometry is MapEllipse ellipse){
                     var tmp = MapEllipse.FromLeftTopRightBottom(Window.mapControl.CoordinateSystem, DrawBeginDot, p);
                     SelectedMapObject.CenterPoint = (GeoPoint) tmp.GetCenter();
@@ -854,7 +978,9 @@ public Decimal SizeBorderDrawing {
                         ellipse.Width = tmp.Width;
                     if(tmp.Height > 0)
                         ellipse.Height = tmp.Height;
+                    SelectedMapObject.RawGeoJson = Utils.GeoJsonFromObject(SelectedDrawObject.Geometry);
                 }
+                //Динамическое рисование полигона по Mousemove
                 if (IsPolygonDrawing && IsDrawBegin && SelectedMapObject.Geometry is MapPolygon polygon){
                     (ServiceLayerVector.Data as MapItemStorage).Items.Clear();
                     if (polygon.Points.Count < 2) {
@@ -877,6 +1003,12 @@ public Decimal SizeBorderDrawing {
                         polygon.Points.RemoveAt(polygon.Points.Count -1);
                         polygon.Points.Add(p);
                     }
+                }
+                //Динамическое рисование полигона по Mousemove
+                if (IsLineDrawing && IsDrawBegin && SelectedMapObject.Geometry is MapPolyline pl){
+                    (ServiceLayerVector.Data as MapItemStorage).Items.Clear();
+                    pl.Points.RemoveAt(pl.Points.Count -1);
+                    pl.Points.Add(p);
                 }
             };
             Window.mapControl.MouseLeave+= (s, e) =>{
@@ -1349,7 +1481,15 @@ public void SearchObjects(string json){
                        (gotoPoint = new RelayCommand(obj =>
                        {
 
+                           Window.mapControl.ZoomLevel = Window.mapControl.MaxZoomLevel;
                            Window.mapControl.CenterPoint = new GeoPoint(CoordPosLat,CoordPosLon);
+                           (ServiceLayerVector.Data as MapItemStorage).Items.Clear();
+                           (ServiceLayerVector.Data as MapItemStorage).Items.Add(new MapPushpin()
+                           {
+                               Location = Window.mapControl.CenterPoint,
+                               EnableSelection = false,
+                               Brush = new SolidColorBrush(Color.FromArgb(128, 252, 3, 86))
+                           });
 
                        }));
             }
@@ -1543,14 +1683,47 @@ public void SearchObjects(string json){
                                if (SelectedMapObject.TypeData == "search")
                                {
                                    AddressesResults.Remove(SelectedMapObject);
+                                   SelectedLayerList.Remove(SelectedMapObject);
                                    SelectedMapObject = null;
                                }else if (SelectedMapObject.Layer == null)
                                    MsgPrinterVM.Error("Не удалось найти слой привязки");
                                else
                                {
                                    SelectedMapObject.Layer.Objects.Remove(SelectedMapObject);
+                                   SelectedLayerList.Remove(SelectedMapObject);
                                    SelectedMapObject = null;
                                }
+                           }
+                       }));
+            }
+        }
+        private RelayCommand printMap;
+        public RelayCommand PrintMap {
+            get {
+                return printMap ??
+                       (printMap = new RelayCommand(obj => {
+                         PrintableControlLink link = new PrintableControlLink(Window.mapControl);
+                         link.Landscape = true;
+                         link.PaperKind = PaperKind.A4;
+                         link.ShowRibbonPrintPreviewDialog(Window);
+                       }));
+            }
+        }
+        private RelayCommand layerToExcel;
+        public RelayCommand LayerToExcel {
+            get {
+                return layerToExcel ??
+                       (layerToExcel = new RelayCommand(obj => {
+                           if (obj is LayerData ld) {
+                               ReportLayer rl = new ReportLayer();
+
+                               rl.DataSource = ld.Objects.Select(o => new ReportLayerModel()
+                               {
+                                   DisplayName = o.DisplayNameLabel,
+                                   Latitude = o.CenterPoint == null ? 0 : o.CenterPoint.Latitude,
+                                   Longitude = o.CenterPoint == null ? 0 : o.CenterPoint.Longitude
+                               });
+                               PrintHelper.ShowRibbonPrintPreviewDialog(Window, rl);
                            }
                        }));
             }

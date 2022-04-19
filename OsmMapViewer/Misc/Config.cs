@@ -10,6 +10,7 @@ namespace OsmMapViewer.Misc
     public static class Config
     {
 
+        public static double DEFAULT_DOT_SIZE = 20;//размеры dot по дефолту
         public static SolidColorBrush SELECT_BRUSH_BORDER = new SolidColorBrush(Colors.Aqua);
         //public const string EXTRA_SEARCH_STRING = "http://localhost/osm_ids.php";
         //public const string EXTRA_SEARCH_STRING = "http://10.113.0.183/api/osm_ids.php";

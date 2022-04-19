@@ -191,6 +191,7 @@ namespace OsmMapViewer.Models
         }
         public void GetObjectData(SerializationInfo info, StreamingContext context){
             info.AddValue("ID", ID, typeof(string));
+            info.AddValue("TypeData", TypeData, typeof(string));
             info.AddValue("DisplayName", DisplayName, typeof(string));
             info.AddValue("IsShowPushpin", IsShowPushpin, typeof(bool));
             info.AddValue("IsShowGeometry", IsShowGeometry, typeof(bool));
@@ -209,6 +210,7 @@ namespace OsmMapViewer.Models
         protected LayerData(SerializationInfo info, StreamingContext context){
             InitData();
             ID = (string)info.GetValue("ID", typeof(string));
+            TypeData = (string)info.GetValue("TypeData", typeof(string));
             DisplayName = (string)info.GetValue("DisplayName", typeof(string));
             IsShowPushpin = (bool)info.GetValue("IsShowPushpin", typeof(bool));
             IsShowGeometry = (bool)info.GetValue("IsShowGeometry", typeof(bool));
