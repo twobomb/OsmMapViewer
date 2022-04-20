@@ -62,6 +62,8 @@
                     </dxr:RibbonPageGroup>
                     <dxr:RibbonPageGroup Caption="Инструменты">
                         <dxb:BarCheckItem IsChecked="{Binding IsRulerActive}" Content="Линейка" Glyph="{dx:DXImage SvgImages/RichEdit/RulerHorizontal.svg}" RibbonStyle="Large"/>
+                        <dxb:BarCheckItem IsChecked="{Binding IsWhatThisActive}" Content="Что здесь находится?" Glyph="{dx:DXImage SvgImages/DiagramIcons/BindingEditorHelpIcon.svg}" RibbonStyle="Large"/>
+                        <dxb:BarCheckItem IsChecked="{Binding IsCopyCoordActive}" Content="Получить координаты" Glyph="{dx:DXImage SvgImages/DiagramIcons/Copy.svg}" RibbonStyle="Large"/>
                     </dxr:RibbonPageGroup>
                 </dxr:RibbonPage>
             </dxr:RibbonDefaultPageCategory>

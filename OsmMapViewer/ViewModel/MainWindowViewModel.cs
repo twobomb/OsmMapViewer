@@ -35,19 +35,76 @@ namespace OsmMapViewer.ViewModel
 {
     public class MainWindowViewModel: ViewModelBase{
 
+
+#region Получить координаты R4
+
+        public bool _IsCopyCoordActive = false;
+
+        public bool IsCopyCoordActive
+        {
+            get
+            {
+                return _IsCopyCoordActive;
+            }
+            set {
+                if (SetProperty(ref _IsCopyCoordActive, value)){
+                    if (value) {
+                        IsWhatThisActive = false;
+                        IsRulerActive = false;
+                        MsgPrinterVM.Info("Кликните на любое место на карте чтобы скопировать широту и долготу в буффер обмена", 8000, "Помощь");
+                    }
+                        
+                }
+            }
+        }
+
+#endregion
+#region Что здесь находится R3
+
+        public bool _IsWhatThisActive = false;
+
+        public bool IsWhatThisActive
+        {
+            get
+            {
+                return _IsWhatThisActive;
+            }
+            set {
+                if (SetProperty(ref _IsWhatThisActive, value)){
+                    if (value)
+                    {
+                        IsCopyCoordActive= false;
+                        IsRulerActive = false;
+                        MsgPrinterVM.Info("Кликните на любое место на карте чтобы получить информацию о ближайших объектах", 8000, "Помощь");
+                    }
+                }
+            }
+        }
+
+#endregion
+
         #region Линейка R2
 
         public ObservableCollection<GeoPoint> RulerList { get; set; } = new ObservableCollection<GeoPoint>();
-
+        
         public bool _IsRulerActive = false;
         public bool IsRulerActive { 
             get{
                 return _IsRulerActive;
             }
             set{
-                if(SetProperty(ref _IsRulerActive, value)){
-                    (ServiceLayerVector.Data as MapItemStorage).Items.Clear();
+                if(SetProperty(ref _IsRulerActive, value)) {
+                    ServiceLayerVector.ShapeTitleOptions = new ShapeTitleOptions()
+                    {
+                        VisibilityMode = VisibilityMode.Visible
+                    };
                     RulerList.Clear();
+                    (ServiceLayerVector.Data as MapItemStorage).Items.Clear();
+                    if (value){
+                        IsWhatThisActive = false;
+                        IsCopyCoordActive= false;
+                        MsgPrinterVM.Info("Используйте левую кнопку мыши для установки точек на карте, а правую кнопку мыши для удаления последней точки", 10000, "Помощь");
+                    }
                 }
             }
         } 
@@ -735,10 +792,6 @@ public Decimal SizeBorderDrawing {
                     Stroke= new SolidColorBrush(Color.FromRgb(252, 152, 3))
                 };
                 (ServiceLayerVector.Data as MapItemStorage).Items.Add(mp);
-                ServiceLayerVector.ShapeTitleOptions = new ShapeTitleOptions()
-                {
-                    VisibilityMode = VisibilityMode.Visible
-                };
 
                 double dist = 0;
                 for(var i = 0; i < RulerList.Count; i++){
@@ -798,6 +851,8 @@ public Decimal SizeBorderDrawing {
 
             Window.RibbonControl.SelectedPageChanged += (sender, args) =>
             {
+                IsFindAllMap = true;
+                OnPropertyChanged("IsFindAllMap");
                 IsSelectDrawing = true;
                 OnPropertyChanged("IsSelectDrawing");
                 
@@ -1106,11 +1161,89 @@ public Decimal SizeBorderDrawing {
                     DrawBeginDot = null;
                 }
             };
-            Window.mapControl.PreviewMouseUp+= (s, e) =>{
+            Window.mapControl.PreviewMouseUp+= (sender, e) =>{
                 
                 bool isClick = Utils.GetDistance(e.GetPosition(Window.mapControl),__mousedownpos) < 5;
                 CoordPoint p = Window.mapControl.ScreenPointToCoordPoint(e.GetPosition(Window.mapControl));
+                //Что здесь
+                if (IsCopyCoordActive && isClick){
+                    var str = (p.GetY() + " " + p.GetX()).Replace(",", ".");
+                    Clipboard.SetText(str);
+                    MsgPrinterVM.Success($"Координаты точки ({str}) были скопированы в буффер обмена!");
+                    IsCopyCoordActive = false;
+                }
+                //Что здесь
+                if (IsWhatThisActive && isClick){
+                    string jsonReq = "{\"tags\":[],\"params\":{\"line\":1,\"polygon\":1,\"point\":1}";
+                    jsonReq += ",\"restrict_point_radius\":{ \"lon\":" + p.GetX().ToString().Replace(',', '.') +
+                                   ",\"lat\":" + p.GetY().ToString().Replace(',', '.') + ",\"radius_meter\":" + 50+
+                                   "}";
+                    jsonReq += "}";
+                    var task = httpClient.PostAsync(Config.GET_DATA, new StringContent(jsonReq, Encoding.UTF8));
+                    task.Wait(20000);
+                    if (task.Status == TaskStatus.RanToCompletion && task.Result.StatusCode == HttpStatusCode.OK){
+                        var tz = task.Result.Content.ReadAsStringAsync();
+                        tz.Wait();
+                        string res = tz.Result;
 
+                        List<MapObject> resultArr = new List<MapObject>();
+                        resultArr.AddRange(Utils.ParseObjects(res));
+                        int limit = 50;
+                        List<MapObject> detailArr = new List<MapObject>();
+                        for (int i = 0; i < resultArr.Count; i += limit)
+                        {
+                            WebClient client = new WebClient();
+                            client.Encoding = Encoding.UTF8;
+                            client.Headers.Add(HttpRequestHeader.UserAgent, "OsmMapViewer");
+                            var cnt = i + limit > resultArr.Count
+                                ? resultArr.Count % limit
+                                : limit;
+                            var vlsArr = resultArr.Skip(i).Take(cnt).ToArray();
+                            ;
+                            var osm_ids_req = string.Join(",",
+                                vlsArr.Select(s => (s.Type == "node" ? "N" : "W") + s.OsmId).ToArray());
+                            var stringRes = client.DownloadString(
+                                String.Format(
+                                    "{0}{1}?osm_ids={2}&format=json&accept-language=ru&polygon_geojson=1&extratags=1",
+                                    Config.NOMINATIM_HOST, Config.NOMINATIM_LOOKUP, osm_ids_req));
+                            var px = Utils.ParseObjects(stringRes);
+                            foreach (var v in vlsArr)
+                            {
+                                var f = px.FirstOrDefault(pp => pp.OsmId == v.OsmId);
+                                if (f != null)
+                                    detailArr.Add(f);
+                                else
+                                    detailArr.Add(v);
+                            }
+                        }
+                        detailArr.Sort((o, o1) => (string.IsNullOrWhiteSpace(o.DisplayName) && !string.IsNullOrWhiteSpace(o1.DisplayName))?1: (!string.IsNullOrWhiteSpace(o.DisplayName) && string.IsNullOrWhiteSpace(o1.DisplayName))?-1:0);
+
+                        if (detailArr.Count > 0)
+                        {
+                            LayerData ld = new LayerData()
+                            {
+                                IsShowPushpin = false,
+                                IsShowGeometry = IsShowGeometry
+                            };
+                            if (string.IsNullOrWhiteSpace(LayerNewName))
+                                ld.DisplayName = "Слой 'что здесь?' " + (LayerIndexCreate++);
+
+                            foreach (var a in detailArr)
+                                ld.Objects.Add(a);
+                            Layers.Add(ld);
+                            SelectedTabIndex = 1;
+                            MsgPrinterVM.Success($"Поиск завершен, найдено объектов: {detailArr.Count}!");
+                        }
+                        else
+                            MsgPrinterVM.Warning("Не найдено ни одного объекта поблизости!");
+
+                    }
+                    else {
+                        MsgPrinterVM.Error("Произошла ошибка при обращении к серверу!");
+                    }
+
+                    IsWhatThisActive = false;
+                }
                 //Линейка
                 if (IsRulerActive && isClick){
                     if (e.ChangedButton == MouseButton.Left)
@@ -1256,7 +1389,6 @@ public void SearchObjects(string json){
                            ",\"lat\":" + RadPosLat.ToString().Replace(',', '.') + ",\"radius_meter\":" + RadiusMetres +
                            "}";
             }
-
             jsonReq += "}";
             var task = httpClient.PostAsync(string.Format("{0}", Config.GET_DATA), new StringContent(jsonReq, Encoding.UTF8));
             task.GetAwaiter().OnCompleted(() => {
