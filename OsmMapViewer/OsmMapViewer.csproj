@@ -118,6 +118,7 @@
       <DependentUpon>MsgPrinter.xaml</DependentUpon>
     </Compile>
     <Compile Include="Misc\RelayCommand.cs" />
+    <Compile Include="Misc\TemplateGenerator.cs" />
     <Compile Include="Misc\WindowBlur.cs" />
     <Compile Include="Models\DataMsgPrinter.cs" />
     <Compile Include="Models\KitSelection.cs" />

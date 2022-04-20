@@ -35,8 +35,26 @@ namespace OsmMapViewer.ViewModel
 {
     public class MainWindowViewModel: ViewModelBase{
 
+        #region Линейка R2
 
-        #region  DRAWING33 R1
+        public ObservableCollection<GeoPoint> RulerList { get; set; } = new ObservableCollection<GeoPoint>();
+
+        public bool _IsRulerActive = false;
+        public bool IsRulerActive { 
+            get{
+                return _IsRulerActive;
+            }
+            set{
+                if(SetProperty(ref _IsRulerActive, value)){
+                    (ServiceLayerVector.Data as MapItemStorage).Items.Clear();
+                    RulerList.Clear();
+                }
+            }
+        } 
+
+#endregion
+
+        #region  DRAWING R1
 
         //Рисование
         public bool IsDotDrawing { get; set; }
@@ -274,6 +292,7 @@ public Decimal SizeBorderDrawing {
         #region int,double
 
 
+        public Point __mousedownpos = new Point(0,0);
         //Настройка РВТ радиус вокруг точки
         public double _RadPosLon = 0;
         public double RadPosLon { //x
@@ -703,6 +722,65 @@ public Decimal SizeBorderDrawing {
             Window.mapControl.SelectionMode = ElementSelectionMode.None;
             Window.mapControl.EnableRotation = CanRotateMap;
 
+
+            RulerList.CollectionChanged += (sender, args) =>{
+                (ServiceLayerVector.Data as MapItemStorage).Items.Clear();
+                MapPolyline mp = new MapPolyline()
+                {
+                    StrokeStyle = new StrokeStyle()
+                    {
+                        Thickness = 6
+                    },                    
+                    Fill= Brushes.Black,
+                    Stroke= new SolidColorBrush(Color.FromRgb(252, 152, 3))
+                };
+                (ServiceLayerVector.Data as MapItemStorage).Items.Add(mp);
+                ServiceLayerVector.ShapeTitleOptions = new ShapeTitleOptions()
+                {
+                    VisibilityMode = VisibilityMode.Visible
+                };
+
+                double dist = 0;
+                for(var i = 0; i < RulerList.Count; i++){
+                    mp.Points.Add(RulerList[i]);
+
+                    MapDot md = new MapDot() {
+                        Location = RulerList[i],
+                        Size = 15,
+                        StrokeStyle = new StrokeStyle() {
+                            Thickness = 2
+                        },
+                        Stroke = Brushes.Black,
+                        Fill = new SolidColorBrush(Color.FromRgb(252, 152, 3))
+                        };
+                    if (i > 0){
+                        dist += GeoUtils.CalculateDistance(RulerList[i - 1], RulerList[i], false);
+                        string distText = "";
+                        if (Math.Floor(dist / 1000f) > 0)
+                            distText = $"{Math.Floor(dist / 1000f).ToString()}км {Math.Round(dist % 1000f).ToString()}м";
+                        else
+                            distText = $"{Math.Round(dist).ToString()}м";
+                        md.TitleOptions = new ShapeTitleOptions()
+                        {
+                            Template = TemplateGenerator.CreateDataTemplate(() =>
+                            {
+                                var tb = new TextBlock()
+                                {
+                                    Background = new SolidColorBrush(Color.FromArgb(200, 255, 255, 255)),
+                                    Padding = new Thickness(3),
+                                    FontSize = 14,
+                                    Text = distText,
+                                    FontWeight = FontWeight.FromOpenTypeWeight(600),
+                                    Margin = new Thickness(0, 0, 0, 35)
+                                };
+                                return tb;
+                            }),
+                            VisibilityMode = VisibilityMode.Visible
+                        };
+                    }
+                    (ServiceLayerVector.Data as MapItemStorage).Items.Add(md);
+                }
+            };
             KitSelectionList.CollectionChanged += (sender, args) =>
             {
                 Utils.SetKitSelectionList(KitSelectionList.ToList());
@@ -726,6 +804,8 @@ public Decimal SizeBorderDrawing {
             };
             //M1
             Window.mapControl.PreviewMouseDown += (s, e) => {
+                __mousedownpos = e.GetPosition(Window.mapControl);
+
                 CoordPoint p = Window.mapControl.ScreenPointToCoordPoint(e.GetPosition(Window.mapControl));
                 if ((IsEllipseDrawing  || IsPolygonDrawing || IsLineDrawing || IsDotDrawing) && e.LeftButton == MouseButtonState.Pressed){
                     if (SelectedLayer == null || SelectedLayer.TypeData != "draw") {
@@ -970,7 +1050,14 @@ public Decimal SizeBorderDrawing {
             };
             Window.mapControl.MouseMove += (sender, e) => {
                 CoordPoint p = Window.mapControl.ScreenPointToCoordPoint(e.GetPosition(Window.mapControl));
-                    //Динамическое рисование элипса по mousemove
+
+                //Линейка
+                if (IsRulerActive && RulerList.Count > 0){
+                    RulerList.RemoveAt(RulerList.Count - 1);
+                    RulerList.Add(new GeoPoint(p.GetY(), p.GetX()));
+                }
+
+                //Динамическое рисование элипса по mousemove
                 if (IsEllipseDrawing && e.LeftButton == MouseButtonState.Pressed && IsDrawBegin && SelectedMapObject.Geometry is MapEllipse ellipse){
                     var tmp = MapEllipse.FromLeftTopRightBottom(Window.mapControl.CoordinateSystem, DrawBeginDot, p);
                     SelectedMapObject.CenterPoint = (GeoPoint) tmp.GetCenter();
@@ -1020,6 +1107,35 @@ public Decimal SizeBorderDrawing {
                 }
             };
             Window.mapControl.PreviewMouseUp+= (s, e) =>{
+                
+                bool isClick = Utils.GetDistance(e.GetPosition(Window.mapControl),__mousedownpos) < 5;
+                CoordPoint p = Window.mapControl.ScreenPointToCoordPoint(e.GetPosition(Window.mapControl));
+
+                //Линейка
+                if (IsRulerActive && isClick){
+                    if (e.ChangedButton == MouseButton.Left)
+                    {
+                        if (RulerList.Count == 0)
+                        {
+                            RulerList.Add(new GeoPoint(p.GetY(), p.GetX()));
+                            RulerList.Add(new GeoPoint(p.GetY(), p.GetX()));
+                        }
+                        else
+                            RulerList.Add(new GeoPoint(p.GetY(), p.GetX()));
+                    }
+                    if (e.ChangedButton == MouseButton.Right)
+                    {
+                        if (RulerList.Count > 2)
+                        {
+                            RulerList.RemoveAt(RulerList.Count - 1);
+                            RulerList.RemoveAt(RulerList.Count - 1);
+                            RulerList.Add(new GeoPoint(p.GetY(), p.GetX()));
+                        }
+                        else
+                            RulerList.Clear();
+                    }
+                }
+
                 Window.mapControl.EnableRotation = CanRotateMap;
                 Window.mapControl.EnableScrolling= true;
                 if (IsEllipseDrawing) {
@@ -1179,13 +1295,12 @@ public void SearchObjects(string json){
                             }
                             catch (Exception ex)
                             {
-                                MsgPrinterVM.Error("Произошла ошибка при обработке запроса  " + ex.Message, 10000);
+                                MsgPrinterVM.Error("Произошла ошибка при обработке запроса!\r\nОшибка: " + ex.Message+ "\r\n\r\nОтвет сервера: "+res, 10000);
                                 Utils.pushCrashLog(ex);
                             }
 
                         }));
-                        if (IsDetailSearch)
-                        {//Поиск с nominatim
+                        if (IsDetailSearch){//Поиск с nominatim
                             int limit = 50;
                             List<MapObject> detailArr = new List<MapObject>();
                             for (int i = 0; i < resultArr.Count; i += limit)

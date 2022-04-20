@@ -60,6 +60,9 @@
                         <dxb:BarButtonItem  Command="{Binding GotoPoint}" Content="Перейти к точке" Glyph="{dx:DXImage SvgImages/Dashboards/GeoPointMaps.svg}" RibbonStyle="Large" LargeGlyph="{dx:DXImage SvgImages/Dashboards/GeoPointMaps.svg}"/>
 
                     </dxr:RibbonPageGroup>
+                    <dxr:RibbonPageGroup Caption="Инструменты">
+                        <dxb:BarCheckItem IsChecked="{Binding IsRulerActive}" Content="Линейка" Glyph="{dx:DXImage SvgImages/RichEdit/RulerHorizontal.svg}" RibbonStyle="Large"/>
+                    </dxr:RibbonPageGroup>
                 </dxr:RibbonPage>
             </dxr:RibbonDefaultPageCategory>
             <dxr:RibbonPageCategory Caption="Найти на карте" Color="#FF92B250">
