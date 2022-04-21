@@ -37,11 +37,21 @@ namespace OsmMapViewer.Models {
         public string OsmId { get; set; }
         public string Type { get; set; }
         public string Class { get; set; }
-        public string DisplayName { get; set; }
+        public string _DisplayName = "";
+        public string DisplayName { 
+            get {
+                return _DisplayName;
+            }
+            set
+            {
+                _DisplayName = value;
+                OnPropertyChanged("DisplayName");
+                OnPropertyChanged("DisplayNameLabel");
+            }
+            }
         public LayerData Layer { get; set; } 
 
-        public string DisplayNameLabel
-        {
+        public string DisplayNameLabel{
             get
             {
                 if (string.IsNullOrWhiteSpace(DisplayName))

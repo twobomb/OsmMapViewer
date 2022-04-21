@@ -21,11 +21,102 @@ using Newtonsoft.Json;
 using Color = System.Windows.Media.Color;
 using OsmMapViewer.Misc;
 using OsmMapViewer.Properties;
+using System.Net;
+using System.Xml;
+using System.Net.Http;
+using System.Net.Http.Headers;
 
 namespace OsmMapViewer
 {
-    public static class Utils
-    {
+    public static class Utils{
+        //osm API-------------------------------------------------------
+
+        private static readonly HttpClient httpClient = new HttpClient();
+        public static string GetOsmData(string type, string osmId) {
+            type = type.ToLower().Trim();
+            osmId = osmId.Trim();
+            if (type != "way" && type != "node" && type != "relation")
+                throw new Exception("Неверный тип :"+type);
+            if(string.IsNullOrEmpty(osmId))
+                throw new Exception("OSM ID не может быть пустым!");
+            
+            WebClient client = new WebClient();
+            client.Encoding = Encoding.UTF8;
+            //client.Headers.Add(HttpRequestHeader.UserAgent, "OsmMapViewer");
+
+
+            var task = httpClient.GetAsync(String.Format("{0}api/0.6/{1}/{2}", Config.API_OSM, type, osmId));
+            task.Wait(15000);
+            if (task.Status == TaskStatus.RanToCompletion){
+                var tz = task.Result.Content.ReadAsStringAsync();
+                tz.Wait(15000);
+                var res = tz.Result;
+                if (task.Result.StatusCode == HttpStatusCode.OK){
+                    return res;
+                }
+                else
+                    throw new Exception("Ошибка, ответ сервера " + task.Result.StatusCode.ToString() + "\r\n" + res);
+            }
+            else if (task.Exception != null)
+                throw task.Exception;
+            else
+                throw new Exception("Не удалось получить ответ от сервера");
+        }
+
+        public static string UpdateOsmData(string xml, string type, string osm_id){
+
+            var content = new StringContent(xml, Encoding.UTF8);
+
+            var authenticationString = "twobomb:svp080709";
+            var base64EncodedAuthenticationString = Convert.ToBase64String(System.Text.ASCIIEncoding.ASCII.GetBytes(authenticationString));
+
+            var requestMessage = new HttpRequestMessage(HttpMethod.Put, String.Format("{0}api/0.6/{1}/{2}", Config.API_OSM, type, osm_id));
+            requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Basic", base64EncodedAuthenticationString);
+            requestMessage.Content = content;
+
+
+            var task = httpClient.SendAsync(requestMessage);
+            task.Wait(20000);
+            if (task.Status == TaskStatus.RanToCompletion){
+                var tz = task.Result.Content.ReadAsStringAsync();
+                tz.Wait(20000);
+                var res = tz.Result;
+                if (task.Result.StatusCode == HttpStatusCode.OK){
+                    return res;
+                }else
+                    throw new Exception("Ошибка, ответ сервера " + task.Result.StatusCode.ToString() + "\r\n" + res);
+            }
+            else if (task.Exception != null)
+                throw task.Exception;
+            else
+                throw new Exception("Не удалось получить ответ от сервера");
+        }
+        public static string ChangeHouseNumber(string xml,string type,string osm_id, string newNumber) {
+            var doc = new XmlDocument();
+            doc.LoadXml(xml);
+            XmlNode node = doc.SelectSingleNode($"//osm/{type}[@id='{osm_id}']");
+            if (node != null){
+                XmlElement tag = (XmlElement)node.SelectSingleNode("tag[@k='addr:housenumber']");
+                if (tag != null)
+                    tag.SetAttribute("v", newNumber);
+                else
+                {
+                    tag = doc.CreateElement("tag");
+                    tag.SetAttribute("k", "addr:housenumber");
+                    tag.SetAttribute("v", newNumber);
+                    node.AppendChild(tag);
+                }
+                return doc.InnerXml;
+            }
+            else
+                throw new Exception("Не найден элемент "+type);
+        }
+
+        //osm API END-------------------------------------------------------
+
+
+
+
         public static void pushCrashLog(Exception e) {
             UnhandledExceptionEventArgs ex = new UnhandledExceptionEventArgs(e, false);
             ((App)App.Current).CurrentDomain_UnhandledException(null, ex);

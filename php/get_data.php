@@ -55,19 +55,22 @@ $tables =[];
 try{
 //Полное вхождение в полигон
 $add_query1 = "";
+
+
+$restrict_type = "within";//within полное вхождение, instersects - пересечение
+if(isset($data["restrict_type"]))
+	$restrict_type = $data["restrict_type"];
+$func = "ST_Within";
+if($restrict_type == "intersects")
+	$func = "ST_Intersects";
+	
 if(isset($data["restrict_polygon"]))
-	$add_query1 = " AND ST_Within(ST_TRANSFORM(way,4326), ST_GeomFromText('".$data["restrict_polygon"]."', 4326)) 
+	$add_query1 = " AND $func(ST_TRANSFORM(way,4326), ST_GeomFromText('".$data["restrict_polygon"]."', 4326)) 
 ";
-//Полное вхождение в окружность заданного радиуса
 $add_query2 = "";
 if(isset($data["restrict_point_radius"]))
-	$add_query2 = " AND ST_Within(ST_Transform(way,4326),ST_Buffer(ST_GeomFromText('POINT(".$data["restrict_point_radius"]["lon"]." ".$data["restrict_point_radius"]["lat"].")', 4326)::geography,".$data["restrict_point_radius"]["radius_meter"].",'quad_segs=50' )::geometry)  ";//Чем больше quad_segs тем плавнее геометрия круга и тем дольше вычисления
+	$add_query2 = " AND $func(ST_Transform(way,4326),ST_Buffer(ST_GeomFromText('POINT(".$data["restrict_point_radius"]["lon"]." ".$data["restrict_point_radius"]["lat"].")', 4326)::geography,".$data["restrict_point_radius"]["radius_meter"].",'quad_segs=50' )::geometry)  ";//Чем больше quad_segs тем плавнее геометрия круга и тем дольше вычисления
 
-//Пересечение с окружностью заданного радиуса
-$add_query3 = "";
-if(isset($data["restrict_intersection_point_radius"]))
-	$add_query3 = " AND ST_Intersects(ST_Transform(way,4326),ST_Buffer(ST_GeomFromText('POINT(".$data["restrict_intersection_point_radius"]["lon"]." ".$data["restrict_intersection_point_radius"]["lat"].")', 4326)::geography,".$data["restrict_intersection_point_radius"]["radius_meter"].",'quad_segs=50' )::geometry)  ";
-	
 	
 	
 if(!isset($data["params"]["line"]) || $data["params"]["line"] == "1")

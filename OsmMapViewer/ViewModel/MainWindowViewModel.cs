@@ -17,6 +17,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
 using System.Windows.Threading;
+using System.Xml;
 using DevExpress.ClipboardSource.SpreadsheetML;
 using DevExpress.Map;
 using DevExpress.Xpf.Grid;
@@ -454,6 +455,9 @@ public Decimal SizeBorderDrawing {
 
 
         public bool CanRotateMap = false;
+
+        //методы поиска
+        public bool IsIntersectsType { get; set; }
 
         public bool _IsFindAllMap = true;
         public bool IsFindAllMap
@@ -1389,6 +1393,10 @@ public void SearchObjects(string json){
                            ",\"lat\":" + RadPosLat.ToString().Replace(',', '.') + ",\"radius_meter\":" + RadiusMetres +
                            "}";
             }
+
+            if ((IsFindRect || IsFindCircle) && IsIntersectsType)
+                jsonReq += ",\"restrict_type\":\"intersects\"";
+
             jsonReq += "}";
             var task = httpClient.PostAsync(string.Format("{0}", Config.GET_DATA), new StringContent(jsonReq, Encoding.UTF8));
             task.GetAwaiter().OnCompleted(() => {
@@ -1523,15 +1531,69 @@ public void SearchObjects(string json){
         }
 
 #region Commands
-        private RelayCommand religion;
-        public RelayCommand Religion
+        private RelayCommand renameObject;
+        public RelayCommand RenameObject
         {
             get
             {
-                return religion ??
-                       (religion = new RelayCommand(obj =>
+                return renameObject ??
+                       (renameObject = new RelayCommand(obj =>{
+                           if (obj is MapObject o){
+                               Prompt prompt = new Prompt();
+                               prompt.Text = o.DisplayName;
+                               prompt.Label = "Введите новое имя";
+                               prompt.Title = "Переименование";
+                               prompt.Owner = Window;
+                               if (prompt.ShowDialog().GetValueOrDefault(false))
+                                   o.DisplayName = prompt.Text;
+                           }
+                           
+                       }));
+            }
+        }
+
+        private RelayCommand deleteObject;
+        public RelayCommand DeleteObject
+        {
+            get
+            {
+                return deleteObject ??
+                       (deleteObject = new RelayCommand(obj =>
                        {
-                               SearchObjects("{\"building\":[\"cathedral\",\"chapel\",\"church\",\"kingdom_hall\",\"monastery\",\"mosque\",\"presbytery\",\"religious\",\"shrine\",\"synagogue\",\"temple\"]}");
+                           if (obj is MapObject o){
+                                   if (o.TypeData == "search")
+                                   {
+                                       AddressesResults.Remove(o);
+                                       SelectedLayerList.Remove(o);
+                                   }
+                                   else if (o.Layer == null)
+                                       MsgPrinterVM.Error("Не удалось найти слой привязки");
+                                   else{
+                                        o.Layer.Objects.Remove(o);
+                                       SelectedLayerList.Remove(o);
+                                   }
+                           }
+
+                       }));
+            }
+        }
+
+        private RelayCommand changeAddr;
+        public RelayCommand ChangeAddr
+        {
+            get
+            {
+                return changeAddr ??
+                       (changeAddr = new RelayCommand(obj =>
+                       {
+                           if (obj is MapObject o){//OSM API
+                               if (o.TypeData == "map" && !string.IsNullOrWhiteSpace(o.OsmId) && !string.IsNullOrWhiteSpace(o.Type) && (o.Type == "way" || o.Type == "node" || o.Type == "relation")){
+                                  
+                               }
+                               else
+                                   MsgPrinterVM.Error("Адрес этого объекта невозможно изменить, недостаточно данных!");
+                           }
+
                        }));
             }
         }
@@ -1579,118 +1641,6 @@ public void SearchObjects(string json){
                        }));
             }
         }
-        /* public RelayCommand SelectFromDicts
-        {
-            get
-            {
-                return selectFromDicts ??
-                       (selectFromDicts = new RelayCommand(obj =>
-                       {
-                           Selector sel = new Selector();
-                           if (sel.ShowDialog().GetValueOrDefault(false))
-                           {
-                               var vm = sel.DataContext as SelectorViewModel;
-                               var t = vm.CheckedItems;
-                               if (t.Count == 0) {
-                                   Utils.MsgBoxWarning("Не указано ни одного тега!");
-                                   return;
-                               }
-
-                               var cancelToken = WaitVMM.ShowWithCancel();
-                               
-                               var json = JsonConvert.SerializeObject(t);
-
-                               List<MapObject> resultArr = new List<MapObject>();
-
-                               var task= httpClient.PostAsync(string.Format("{0}?line={1}&polygon={2}&point={3}", Config.EXTRA_SEARCH_STRING,IsLineChecked?"1":"0",IsPolygonChecked?"1":"0",IsPointChecked?"1":"0"), new StringContent(json,Encoding.UTF8));
-                               task.GetAwaiter().OnCompleted(() => {
-                                   if (cancelToken.IsCancellationRequested) {
-                                       WaitVMM.WaitVisible = false;
-                                       return;
-                                   }
-                                   if (task.Status == TaskStatus.RanToCompletion) {
-                                       Task.Run(() => {
-                                           var tz = task.Result.Content.ReadAsStringAsync();
-                                           tz.Wait();
-                                           string res = tz.Result;
-                                           if (string.IsNullOrWhiteSpace(res))
-                                           {
-                                               Utils.MsgBoxInfo("Не найдено ни одного объекта");
-                                               WaitVMM.WaitVisible = false;
-                                               return;
-                                           }
-                                           if (task.Result.StatusCode != HttpStatusCode.OK){
-                                               string err = "Произошла на сервере. Код: " +
-                                                                     task.Result.StatusCode.ToString() + " Ответ :" + res.ToString();
-                                                DisplayDownText = err;
-                                               Utils.pushCrashLog(new Exception(err));
-                                               WaitVMM.WaitVisible = false;
-                                               return;
-                                           }
-                                           var osm_ids = res.Split(new char[] { ',' }).ToArray();
-                                           int limit = 50;
-
-                                           for (int i = 0; i < osm_ids.Length; i += limit) {
-                                               if (cancelToken.IsCancellationRequested){
-                                                   WaitVMM.WaitVisible = false;
-                                                   return;
-                                               }
-                                               WaitVMM.WaitText = String.Format("Обработано {0} из {1}", i,
-                                                           osm_ids.Length);
-                                               WebClient client = new WebClient();
-                                               client.Encoding = Encoding.UTF8;
-                                               client.Headers.Add(HttpRequestHeader.UserAgent, "OsmMapViewer");
-                                               var cnt = i + limit > osm_ids.Length
-                                                   ? osm_ids.Length % limit
-                                                   : limit;
-                                               var vls = osm_ids.Skip(i).Take(cnt).ToArray();
-                                               var osm_ids_req = string.Join(",", vls);
-                                               try{
-                                                   var stringRes = client.DownloadString(
-                                                       String.Format("{0}{1}?osm_ids={2}&format=json&accept-language=ru&polygon_geojson=1&extratags=1", Config.NOMINATIM_HOST, Config.NOMINATIM_LOOKUP, osm_ids_req));
-                                                   Window.Dispatcher.Invoke(new Action(() => {
-                                                       try{
-                                                            resultArr.AddRange(Utils.ParseObjects(stringRes));
-                                                        }
-                                                       catch(Exception ex)
-                                                       {
-                                                           DisplayDownText = "Произошла ошибка при обработке запроса Nominatim. " + ex.Message;
-                                                           Utils.pushCrashLog(ex);
-                                                       }
-                                                   }));
-                                               }
-                                               catch (Exception e) {
-                                                   DisplayDownText = "Произошла ошибка при запросе на Nominatim. " + e.Message;
-                                                   Utils.pushCrashLog(e);
-                                                   WaitVMM.WaitVisible = false;
-                                                   //throw e;
-                                                   return;
-                                               }
-                                           }
-
-                                           Window.Dispatcher.Invoke(DispatcherPriority.Normal, new Action(() => {
-                                               WaitVMM.WaitVisible = false;
-                                               if (cancelToken.IsCancellationRequested)
-                                                   return;
-                                               AddressesResults.Clear();
-                                               foreach (var a in resultArr)
-                                                   AddressesResults.Add(a);
-                                           }));
-                                       });
-                                   }
-                                   else {
-                                       if (task.Exception != null)
-                                           DisplayDownText = "Произошла ошибка запроса " +
-                                                             task.Exception.GetBaseException().Message;
-                                       else
-                                           DisplayDownText = "Произошла ошибка запроса!";
-                                       WaitVMM.WaitVisible = false;
-                                   }
-                               });
-                           }
-                       }));
-            }
-        }*/
         private RelayCommand searchBtn;
         public RelayCommand SearchBtn
         {
@@ -1963,7 +1913,7 @@ public void SearchObjects(string json){
                        (layerToExcel = new RelayCommand(obj => {
                            if (obj is LayerData ld) {
                                ReportLayer rl = new ReportLayer();
-
+                               (rl.FindControl("label1", true) as XRLabel).Text= ld.DisplayName;
                                rl.DataSource = ld.Objects.Select(o => new ReportLayerModel()
                                {
                                    DisplayName = o.DisplayNameLabel,

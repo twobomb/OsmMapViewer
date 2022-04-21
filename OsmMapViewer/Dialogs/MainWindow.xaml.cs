@@ -14,6 +14,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Xml;
 using DevExpress.Map;
 using DevExpress.Xpf.Bars;
 using DevExpress.Xpf.Core;
@@ -34,7 +35,13 @@ namespace OsmMapViewer
         public MainWindow(){
             System.Net.ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
 
+            //test 4305835027
+            //prod 1047479833
             InitializeComponent();
+            var xml = Utils.GetOsmData("way", "4305835027");
+            xml = Utils.ChangeHouseNumber(xml, "way", "4305835027", "17a");
+            var qq = Utils.UpdateOsmData(xml, "way", "4305835027");
+
             DataContext = new MainWindowViewModel(this);
 
             this.Loaded += MainWindow_Loaded;

@@ -1,4 +1,5 @@
 ﻿<dx:ThemedWindow    
+                    x:Name="MainWind"
                     xmlns:dxm="http://schemas.devexpress.com/winfx/2008/xaml/map" 
                      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -18,7 +19,7 @@
     
                      designTime:DataContext="{designTime:DesignInstance Type={x:Type viewModel:MainWindowViewModel}}"
                      x:Class="OsmMapViewer.MainWindow"
-                     Title="MainWindow" Height="658" Width="1195">
+                     Title="Картограф" Height="658" Width="1400">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -100,6 +101,20 @@
                             </dxb:BarEditItem.EditSettings>
                         </dxb:BarEditItem>
                     </dxr:RibbonPageGroup>
+
+                    <dxr:RibbonPageGroup Caption="Метод поиска">
+                        <dxr:RibbonPageGroup.Style>
+                            <Style TargetType="{x:Type dxr:RibbonPageGroup}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsFindAllMap}" Value="True">
+                                        <Setter Property="IsVisible" Value="False"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </dxr:RibbonPageGroup.Style>
+                        <dxb:BarCheckItem IsChecked="True" Content="Полное вхождение" GroupIndex="36" Glyph="{dx:DXImage SvgImages/DiagramIcons/ContainerPadding.svg}"/>
+                        <dxb:BarCheckItem Content="Пересечение" IsChecked="{Binding IsIntersectsType}" GroupIndex="36" Glyph="{dx:DXImage SvgImages/DiagramIcons/Layers/layers1.svg}"/>
+                    </dxr:RibbonPageGroup>
                     <dxr:RibbonPageGroup Caption="Что выбирать?">
                         <dxb:BarCheckItem Content="Линии" GroupIndex="-1" RibbonStyle="Large" LargeGlyph="{dx:DXImage SvgImages/Icon Builder/Business_LinearChart.svg}" IsChecked="{Binding IsLineChecked}"/>
                         <dxb:BarCheckItem Content="Полигоны" RibbonStyle="Large" IsChecked="{Binding IsPolygonChecked}" GroupIndex="-1" LargeGlyph="{dx:DXImage SvgImages/Chart/ChartType_PolarArea.svg}"/>
@@ -155,8 +170,8 @@
                         </dxb:BarSubItem>
 
                     </dxr:RibbonPageGroup>
-                    <dxr:RibbonPageGroup Caption="Ribbon Page Group">
-                        <dxb:BarButtonItem Command="{Binding Religion}" Content="Религиозные" Glyph="{dx:DXImage SvgImages/Scheduling/GoToToday.svg}"/>
+                    <dxr:RibbonPageGroup Caption="Дополнительно">
+                        <dxb:BarButtonItem Content="Справка по меню поиска объектов" Glyph="{dx:DXImage SvgImages/Icon Builder/Actions_Question.svg}" RibbonStyle="Large"/>
                     </dxr:RibbonPageGroup>
                 </dxr:RibbonPage>
 
@@ -198,7 +213,6 @@
                             <dxe:TextEditSettings/>
                         </dxb:BarEditItem.EditSettings>
                     </dxb:BarEditItem>
-                    <dxb:BarButtonItem Content="Добавить свой тег" Glyph="{dx:DXImage SvgImages/Business Objects/BO_Price.svg}"/>
                 </dxr:RibbonPageGroup>
                 <dxr:RibbonPageGroup Caption="Параметры окружности">
                     <dxr:RibbonPageGroup.Style>
@@ -314,7 +328,7 @@
                 </dx:DXTabItem>
                 <dx:DXTabItem Header="Слои">
                     <Grid Background="Transparent" Margin="0" HorizontalAlignment="Stretch">
-                        <Grid x:Name="grid_detail_layer" >
+                        <Grid x:Name="grid_detail_layer" Panel.ZIndex="55" >
                             <Grid.Style>
                                 <Style TargetType="{x:Type Grid}">
                                     <Style.Triggers>
@@ -330,17 +344,26 @@
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
                             <dx:SimpleButton Command="{Binding ShowHideLayersList}"  Margin="5" Padding="0 0" HorizontalAlignment="Stretch" Grid.Column="1" Height="30"  Content="Вернуться к просмотру слоёв" GlyphAlignment="Left" GlyphToContentOffset="10" FontSize="14"  GlyphHeight="20" Glyph="{dx:DXImage SvgImages/Navigation/Backward.svg}" />
-                            <TextBlock FontSize="14" Grid.Row="1" Text="{Binding ShowLayerObjectsShown}" HorizontalAlignment="Right"/>
+                            <TextBlock  FontSize="14" Grid.Row="1" Text="{Binding ShowLayerObjectsShown}" HorizontalAlignment="Right"/>
                             <ListBox SelectedItem="{Binding SelectedLayerObject}" ScrollViewer.ScrollChanged="lb_layerItemsBox_ScrollChanged" Grid.Row="2" x:Name="lb_layerItemsBox" HorizontalAlignment="Stretch"  ItemsSource="{Binding SelectedLayerList}" HorizontalContentAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                                 <ListBox.ItemContainerStyle>
                                     <Style TargetType="{x:Type ListBoxItem}">
                                         <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
                                     </Style>
                                 </ListBox.ItemContainerStyle>
+
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
-                                        <Border BorderBrush="#FF0170BB" BorderThickness="0 0 0 1" Padding="0 0 0 15">
-                                            <TextBlock HorizontalAlignment="Left" FontSize="13" Text="{Binding DisplayNameLabel}" TextWrapping="Wrap" Foreground="#FF0170BB" />
+                                        <Border BorderBrush="#FF0170BB" BorderThickness="0 0 0 1" Padding="0 0 0 15" HorizontalAlignment="Stretch" Background="Transparent">
+                                            <Border.ContextMenu>
+                                                <ContextMenu Tag="{Binding Source={x:Reference MainWind},Path= DataContext}">
+                                                    <MenuItem Header="Переименовать" CommandParameter="{Binding}"  Command="{Binding Path=Tag.RenameObject, RelativeSource={RelativeSource AncestorType=ContextMenu,Mode=FindAncestor}}"></MenuItem>
+                                                    <MenuItem Header="Удалить" CommandParameter="{Binding}"  Command="{Binding Path=Tag.DeleteObject, RelativeSource={RelativeSource AncestorType=ContextMenu,Mode=FindAncestor}}"></MenuItem>
+                                                    <MenuItem Header="Изменить номер дома" CommandParameter="{Binding}"  Command="{Binding Path=Tag.ChangeAddr, RelativeSource={RelativeSource AncestorType=ContextMenu,Mode=FindAncestor}}"></MenuItem>
+                                                </ContextMenu>
+                                            </Border.ContextMenu>
+                                            <TextBlock HorizontalAlignment="Left" FontSize="13" Text="{Binding DisplayNameLabel}" TextWrapping="Wrap" Foreground="#FF0170BB" >
+                                            </TextBlock>
                                         </Border>
                                     </DataTemplate>
                                 </ListBox.ItemTemplate>
@@ -543,7 +566,6 @@
                                     </DataTemplate>
                                 </ListBox.ItemTemplate>
                             </ListBox>
-
                         </Grid>
                     </Grid>
                 </dx:DXTabItem>
