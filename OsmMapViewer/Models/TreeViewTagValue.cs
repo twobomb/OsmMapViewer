@@ -11,7 +11,7 @@ using OsmMapViewer.Annotations;
 
 namespace OsmMapViewer.Models
 {
-    public class TreeViewTagValue
+    public class TreeViewTagValue: INotifyPropertyChanged
     {
 
         public string Name { get; set; }
@@ -24,9 +24,32 @@ namespace OsmMapViewer.Models
         public string Icon{ get; set; }
         public bool Variable{ get; set; }
 
-        public bool IsCheckedMe { get; set; }
+        public bool _IsCheckedMe { get; set; }
+
+        public bool IsCheckedMe
+        {
+            get
+            {
+                return _IsCheckedMe;
+            }
+            set
+            {
+                if (_IsCheckedMe != value)
+                {
+                    _IsCheckedMe = value;
+                    OnPropertyChanged("IsCheckedMe");
+                }
+            }
+        }
 
         public ObservableCollection<TreeViewTagValue> ChildrenItems { get; } = new ObservableCollection<TreeViewTagValue>();
-     
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        [NotifyPropertyChangedInvocator]
+        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));          
+        }
     }
 }

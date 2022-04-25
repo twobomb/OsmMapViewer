@@ -1,0 +1,97 @@
+﻿<dx:ThemedWindow
+    x:Class="OsmMapViewer.Dialogs.CreateHouse"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:dx="http://schemas.devexpress.com/winfx/2008/xaml/core"
+    Title="Создание дома" Height="600" Width="561.5"
+    SizeToContent="WidthAndHeight"
+    ResizeMode="NoResize"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:designTime="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:dialogs="clr-namespace:OsmMapViewer.Dialogs"
+    xmlns:dxe="http://schemas.devexpress.com/winfx/2008/xaml/editors"
+    xmlns:dxg="http://schemas.devexpress.com/winfx/2008/xaml/grid"
+    xmlns:converter="clr-namespace:OsmMapViewer.Converter"
+    mc:Ignorable="designTime"
+    designTime:DataContext="{designTime:DesignInstance Type={x:Type dialogs:CreateHouse}}"
+    >
+
+    <Window.Resources>
+        <converter:TreeViewImageConverter x:Key="myImageConverter" />
+    </Window.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"></RowDefinition>
+            <RowDefinition Height="Auto"></RowDefinition>
+            <RowDefinition MaxHeight="500"></RowDefinition>
+            <RowDefinition Height="Auto"></RowDefinition>
+            <RowDefinition Height="Auto"></RowDefinition>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"></ColumnDefinition>
+            <ColumnDefinition Width="Auto" ></ColumnDefinition>
+        </Grid.ColumnDefinitions>
+        <Label FontSize="14" Content="Номер дома" Margin="5"></Label>
+        <TextBox  FontSize="14" HorizontalAlignment="Left" Text="{Binding HouseNumber}" Width="80" Grid.Column="1" Margin="5"></TextBox>
+
+        <Label FontSize="14" Content="Улица" Grid.Row="1" Margin="5"></Label>
+        <ComboBox  Grid.Row="1" Grid.Column="1" Width="400" IsEditable="True" ItemsSource="{Binding Streets}" Text="{Binding SelectedStreet}"  Margin="5"></ComboBox>
+
+        <Label FontSize="14" Content="Улица" Grid.Row="1" Margin="5"></Label>
+        <ComboBox  Grid.Row="1" Grid.Column="1" Width="400" IsEditable="True" ItemsSource="{Binding Streets}" Text="{Binding SelectedStreet}"  Margin="5"></ComboBox>
+
+        <Label FontSize="14" Content="Тип строения" Grid.Row="2" Margin="5"></Label>
+
+        <dxg:TreeViewControl  Margin="5" x:Name="tvm_list" Grid.Row="2" Grid.Column="1"
+                              ItemsSource="{Binding tagList}"
+                              ChildNodesPath="ChildrenItems" 
+                              EnableDynamicLoading ="False"
+                              SelectionMode="Row"
+                              CheckBoxFieldName="IsCheckedMe"
+                              ShowCheckboxes="True"
+                              SelectedItem="{Binding TagSelected}"
+                              NodeCheckStateChanged="Tvm_list_OnNodeCheckStateChanged"
+                              AllowRecursiveNodeChecking="False"
+                              TreeViewFieldName="Name">
+        </dxg:TreeViewControl>
+        <Grid Grid.Row="3" Grid.ColumnSpan="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"></ColumnDefinition>
+                    <ColumnDefinition Width="*" ></ColumnDefinition>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Orientation="Vertical" Tag="{Binding Path=TagSelected,Converter={StaticResource myImageConverter},ConverterParameter=Photo}">
+                    <StackPanel.Style>
+                        <Style TargetType="StackPanel">
+                            <Style.Triggers>
+                                <Trigger Property="Tag" Value="{x:Null}">
+                                    <Setter Property="Visibility" Value="Collapsed"></Setter>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </StackPanel.Style>
+                    <Image Width="100"  HorizontalAlignment="Center" Source="{Binding Path=Parent.Tag,RelativeSource={RelativeSource Self}}"></Image>
+                </StackPanel>
+
+            <TextBox Grid.Column="1" MaxWidth="400" TextWrapping="Wrap" IsReadOnly="True" AcceptsReturn="True" Text="{Binding TagSelected.Description}" HorizontalAlignment="Stretch" FontSize="14">
+                <TextBox.Style>
+                    <Style TargetType="TextBox">
+                        <Style.Triggers>
+                            <Trigger Property="Text" Value="{x:Null}">
+                                <Setter Property="Visibility" Value="Collapsed"></Setter>
+                            </Trigger>
+                            <Trigger Property="Text" Value="">
+                                <Setter Property="Visibility" Value="Collapsed"></Setter>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBox.Style>
+            </TextBox>
+        </Grid>
+
+        <StackPanel Orientation="Horizontal" Grid.ColumnSpan="2"  Grid.Row="4" HorizontalAlignment="Right" Margin="0 10 0 0">
+            <dx:SimpleButton  GlyphHeight="25" Padding="10 5" MinWidth="120" Content="Подтвердить" GlyphAlignment="Left" Glyph="{dx:DXImage SvgImages/Content/CheckBox.svg}" Click="SimpleButton_Click"/>
+            <dx:SimpleButton  GlyphHeight="25" Padding="10 5"  MinWidth="120" Margin="20 0 0 0" Content="Отмена" GlyphAlignment="Left" Glyph="{dx:DXImage SvgImages/RichEdit/CloseHeaderAndFooter.svg}" Click="SimpleButton_Click_1"/>
+        </StackPanel>
+    </Grid>
+</dx:ThemedWindow>

@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -21,6 +23,7 @@ using DevExpress.Xpf.Core;
 using DevExpress.Xpf.Grid;
 using DevExpress.Xpf.Grid.Printing;
 using DevExpress.Xpf.Map;
+using OsmMapViewer.Dialogs;
 using OsmMapViewer.Misc;
 using OsmMapViewer.Models;
 using OsmMapViewer.ViewModel;
@@ -30,25 +33,23 @@ namespace OsmMapViewer
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : ThemedWindow{
+    public partial class MainWindow : ThemedWindow
+    {
 
+        public ImageLayer imageLayer;
         public MainWindow(){
             System.Net.ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
 
-            //test 4305835027
-            //prod 1047479833
             InitializeComponent();
-            var xml = Utils.GetOsmData("way", "4305835027");
-            xml = Utils.ChangeHouseNumber(xml, "way", "4305835027", "17a");
-            var qq = Utils.UpdateOsmData(xml, "way", "4305835027");
 
             DataContext = new MainWindowViewModel(this);
 
             this.Loaded += MainWindow_Loaded;
-        }
 
+        }
+        
         private void MainWindow_Loaded(object sender, RoutedEventArgs e) {
-            
+
             mapControl.MinZoomLevel = 1;
             mapControl.MaxZoomLevel = 18;
             mapControl.ShowSearchPanel = true;
@@ -65,10 +66,11 @@ namespace OsmMapViewer
             {
                 Visible = false
             };
-            var layer = new ImageLayer();
-            mapControl.Layers.Insert(0,layer);
+            imageLayer = new ImageLayer();
+            mapControl.Layers.Insert(0, imageLayer);
             OpenStreetMapDataProvider provider = new OpenStreetMapDataProvider();
-            layer.DataProvider = provider;
+
+            imageLayer.DataProvider = provider;
 
             provider.TileUriTemplate = Config.TILE_SERVER_TEMPLATE;
             provider.WebRequest += Provider_WebRequest;
@@ -81,8 +83,6 @@ namespace OsmMapViewer
 
         private void MapControl_MouseLeftButtonUp(object sender, MouseButtonEventArgs e){
 
-            CoordPoint t = mapControl.ScreenPointToCoordPoint(e.GetPosition(mapControl));
-            Console.WriteLine(t.GetX() + " " + t.GetY());
         }
 
 
@@ -91,7 +91,7 @@ namespace OsmMapViewer
         private void Provider_WebRequest(object sender, MapWebRequestEventArgs e)
         {
             e.Referer = "https://www.openstreetmap.org/";
-            e.UserAgent = "com.mycompany.myapp";
+            e.UserAgent = "OsmMapViewer";
         }
 
         //Автоподгрузка элементов по скроллу 

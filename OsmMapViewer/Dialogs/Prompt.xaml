@@ -18,8 +18,8 @@
         <Label x:Name="lb_label" Content="Введите текст" FontSize="14" FontWeight="Black"></Label>
         <TextBox Grid.Row="1" x:Name="tb_text" FontSize="14"></TextBox>
         <StackPanel Orientation="Horizontal" Grid.Row="2" HorizontalAlignment="Right" Margin="0 10 0 0">
-            <dx:SimpleButton Command="{Binding OpenSaveLayers}" GlyphHeight="25" Padding="10 5" MinWidth="120" Content="Подтвердить" GlyphAlignment="Left" Glyph="{dx:DXImage SvgImages/Content/CheckBox.svg}" Click="SimpleButton_Click"/>
-            <dx:SimpleButton Command="{Binding OpenSaveLayers}" GlyphHeight="25" Padding="10 5"  MinWidth="120" Margin="20 0 0 0" Content="Отмена" GlyphAlignment="Left" Glyph="{dx:DXImage SvgImages/RichEdit/CloseHeaderAndFooter.svg}" Click="SimpleButton_Click_1"/>
+            <dx:SimpleButton GlyphHeight="25" Padding="10 5" MinWidth="120" Content="Подтвердить" GlyphAlignment="Left" Glyph="{dx:DXImage SvgImages/Content/CheckBox.svg}" Click="SimpleButton_Click"/>
+            <dx:SimpleButton GlyphHeight="25" Padding="10 5"  MinWidth="120" Margin="20 0 0 0" Content="Отмена" GlyphAlignment="Left" Glyph="{dx:DXImage SvgImages/RichEdit/CloseHeaderAndFooter.svg}" Click="SimpleButton_Click_1"/>
         </StackPanel>
     </Grid>
 </Window>

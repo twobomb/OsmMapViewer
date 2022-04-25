@@ -3,16 +3,21 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Data;
+using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Drawing.Printing;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
@@ -20,15 +25,26 @@ using System.Windows.Threading;
 using System.Xml;
 using DevExpress.ClipboardSource.SpreadsheetML;
 using DevExpress.Map;
+using DevExpress.Map.Native;
+using DevExpress.Mvvm.UI.Native;
 using DevExpress.Xpf.Grid;
 using DevExpress.Xpf.Map;
 using DevExpress.Xpf.Printing;
+using DevExpress.XtraEditors;
 using DevExpress.XtraPrinting.Native;
 using DevExpress.XtraReports.UI;
 using Newtonsoft.Json;
 using OsmMapViewer.Dialogs;
 using OsmMapViewer.Misc;
 using OsmMapViewer.Models;
+using Brush = System.Windows.Media.Brush;
+using Brushes = System.Windows.Media.Brushes;
+using Clipboard = System.Windows.Clipboard;
+using Color = System.Windows.Media.Color;
+using GeoUtils = DevExpress.Xpf.Map.GeoUtils;
+using Image = System.Windows.Controls.Image;
+using MessageBox = System.Windows.MessageBox;
+using Point = System.Windows.Point;
 using Size = System.Drawing.Size;
 using Timer = System.Timers.Timer;
 
@@ -49,7 +65,9 @@ namespace OsmMapViewer.ViewModel
             }
             set {
                 if (SetProperty(ref _IsCopyCoordActive, value)){
-                    if (value) {
+                    if (value)
+                    {
+                        IsImageAreaActive = false;
                         IsWhatThisActive = false;
                         IsRulerActive = false;
                         MsgPrinterVM.Info("Кликните на любое место на карте чтобы скопировать широту и долготу в буффер обмена", 8000, "Помощь");
@@ -74,9 +92,10 @@ namespace OsmMapViewer.ViewModel
                 if (SetProperty(ref _IsWhatThisActive, value)){
                     if (value)
                     {
-                        IsCopyCoordActive= false;
+                        IsImageAreaActive = false;
+                        IsCopyCoordActive = false;
                         IsRulerActive = false;
-                        MsgPrinterVM.Info("Кликните на любое место на карте чтобы получить информацию о ближайших объектах", 8000, "Помощь");
+                        MsgPrinterVM.Info("Кликните на любое место на карте чтобы получить информацию о ближайших объектах. По умолчанию поиск идёт по полному вхождению ближайших объектов. Если при клике зажать левый Ctrl, то поиск будет находить также объекты пересекающие область клика.", 8000, "Помощь");
                     }
                 }
             }
@@ -101,16 +120,59 @@ namespace OsmMapViewer.ViewModel
                     };
                     RulerList.Clear();
                     (ServiceLayerVector.Data as MapItemStorage).Items.Clear();
-                    if (value){
+                    if (value)
+                    {
+                        IsImageAreaActive = false;
                         IsWhatThisActive = false;
                         IsCopyCoordActive= false;
                         MsgPrinterVM.Info("Используйте левую кнопку мыши для установки точек на карте, а правую кнопку мыши для удаления последней точки", 10000, "Помощь");
                     }
                 }
             }
-        } 
+        }
 
-#endregion
+        #endregion
+
+        #region Сформировать изображение
+
+
+        public bool IsCropImage { get; set; } = true;
+        public Decimal ScaleImage { get; set; } = 14;
+
+        public bool _IsImageAreaActive = false;
+        public bool IsImageAreaActive
+        {
+            get
+            {
+                return _IsImageAreaActive;
+            }
+            set
+            {
+                if (SetProperty(ref _IsImageAreaActive, value)){
+                    if (value){
+                        IsRulerActive = false;
+                        IsWhatThisActive = false;
+                        IsCopyCoordActive = false;
+
+
+                        (ServiceLayerVector.Data as MapItemStorage).Items.Clear();
+                        MapPolygonSelection = new MapPolygon()
+                        {
+                            EnableSelection = false,
+                            EnableHighlighting = false,
+                            Fill = new SolidColorBrush(Color.FromArgb(80, 3, 32, 252)),
+                            Stroke = new SolidColorBrush(Color.FromArgb(255, 3, 32, 252)),
+                            Visible = false
+                        };
+                        (ServiceLayerVector.Data as MapItemStorage).Items.Add(MapPolygonSelection);
+                        MsgPrinterVM.Info("Удерживайте левый Shift и нажимайте левую кнопку мыши чтобы добавить точку или правую кнопку мыши чтобы удалить точку", 10000, "Подсказка");
+                    }
+                }
+            }
+        }
+
+
+        #endregion
 
         #region  DRAWING R1
 
@@ -1080,7 +1142,7 @@ public Decimal SizeBorderDrawing {
                     OnPropertyChanged("CoordPosLat");
                 }
                 if (Keyboard.Modifiers == ModifierKeys.Shift){
-                    if (IsFindRect) {
+                    if (IsFindRect || IsImageAreaActive) {
                         Window.mapControl.EnableRotation = false;
                         Window.mapControl.EnableScrolling = false;
                         MapPolygonSelection.Visible = true;
@@ -1169,7 +1231,7 @@ public Decimal SizeBorderDrawing {
                 
                 bool isClick = Utils.GetDistance(e.GetPosition(Window.mapControl),__mousedownpos) < 5;
                 CoordPoint p = Window.mapControl.ScreenPointToCoordPoint(e.GetPosition(Window.mapControl));
-                //Что здесь
+                //скопировать корды
                 if (IsCopyCoordActive && isClick){
                     var str = (p.GetY() + " " + p.GetX()).Replace(",", ".");
                     Clipboard.SetText(str);
@@ -1178,72 +1240,81 @@ public Decimal SizeBorderDrawing {
                 }
                 //Что здесь
                 if (IsWhatThisActive && isClick){
-                    string jsonReq = "{\"tags\":[],\"params\":{\"line\":1,\"polygon\":1,\"point\":1}";
-                    jsonReq += ",\"restrict_point_radius\":{ \"lon\":" + p.GetX().ToString().Replace(',', '.') +
+                    try
+                    {
+                        string jsonReq = "{\"tags\":[],\"params\":{\"line\":1,\"polygon\":1,\"point\":1}";
+                        jsonReq += ",\"restrict_point_radius\":{ \"lon\":" + p.GetX().ToString().Replace(',', '.') +
                                    ",\"lat\":" + p.GetY().ToString().Replace(',', '.') + ",\"radius_meter\":" + 50+
                                    "}";
-                    jsonReq += "}";
-                    var task = httpClient.PostAsync(Config.GET_DATA, new StringContent(jsonReq, Encoding.UTF8));
-                    task.Wait(20000);
-                    if (task.Status == TaskStatus.RanToCompletion && task.Result.StatusCode == HttpStatusCode.OK){
-                        var tz = task.Result.Content.ReadAsStringAsync();
-                        tz.Wait();
-                        string res = tz.Result;
+                        if(Keyboard.Modifiers == ModifierKeys.Control)
+                            jsonReq += ",\"restrict_type\":\"intersects\"";
+                        jsonReq += "}";
+                        var task = httpClient.PostAsync(Config.GET_DATA, new StringContent(jsonReq, Encoding.UTF8));
+                        task.Wait(20000);
+                        if (task.Status == TaskStatus.RanToCompletion && task.Result.StatusCode == HttpStatusCode.OK){
+                            var tz = task.Result.Content.ReadAsStringAsync();
+                            tz.Wait();
+                            string res = tz.Result;
 
-                        List<MapObject> resultArr = new List<MapObject>();
-                        resultArr.AddRange(Utils.ParseObjects(res));
-                        int limit = 50;
-                        List<MapObject> detailArr = new List<MapObject>();
-                        for (int i = 0; i < resultArr.Count; i += limit)
-                        {
-                            WebClient client = new WebClient();
-                            client.Encoding = Encoding.UTF8;
-                            client.Headers.Add(HttpRequestHeader.UserAgent, "OsmMapViewer");
-                            var cnt = i + limit > resultArr.Count
-                                ? resultArr.Count % limit
-                                : limit;
-                            var vlsArr = resultArr.Skip(i).Take(cnt).ToArray();
-                            ;
-                            var osm_ids_req = string.Join(",",
-                                vlsArr.Select(s => (s.Type == "node" ? "N" : "W") + s.OsmId).ToArray());
-                            var stringRes = client.DownloadString(
-                                String.Format(
-                                    "{0}{1}?osm_ids={2}&format=json&accept-language=ru&polygon_geojson=1&extratags=1",
-                                    Config.NOMINATIM_HOST, Config.NOMINATIM_LOOKUP, osm_ids_req));
-                            var px = Utils.ParseObjects(stringRes);
-                            foreach (var v in vlsArr)
+                            List<MapObject> resultArr = new List<MapObject>();
+                            resultArr.AddRange(Utils.ParseObjects(res));
+                            int limit = 50;
+                            List<MapObject> detailArr = new List<MapObject>();
+                            for (int i = 0; i < resultArr.Count; i += limit)
                             {
-                                var f = px.FirstOrDefault(pp => pp.OsmId == v.OsmId);
-                                if (f != null)
-                                    detailArr.Add(f);
-                                else
-                                    detailArr.Add(v);
+                                WebClient client = new WebClient();
+                                client.Encoding = Encoding.UTF8;
+                                client.Headers.Add(HttpRequestHeader.UserAgent, "OsmMapViewer");
+                                var cnt = i + limit > resultArr.Count
+                                    ? resultArr.Count % limit
+                                    : limit;
+                                var vlsArr = resultArr.Skip(i).Take(cnt).ToArray();
+                                ;
+                                var osm_ids_req = string.Join(",",
+                                    vlsArr.Select(s => (s.Type == "node" ? "N" : "W") + s.OsmId).ToArray());
+                                var stringRes = client.DownloadString(
+                                    String.Format(
+                                        "{0}{1}?osm_ids={2}&format=json&accept-language=ru&polygon_geojson=1&extratags=1",
+                                        Config.NOMINATIM_HOST, Config.NOMINATIM_LOOKUP, osm_ids_req));
+                                var px = Utils.ParseObjects(stringRes);
+                                foreach (var v in vlsArr)
+                                {
+                                    var f = px.FirstOrDefault(pp => pp.OsmId == v.OsmId);
+                                    if (f != null)
+                                        detailArr.Add(f);
+                                    else
+                                        detailArr.Add(v);
+                                }
                             }
-                        }
-                        detailArr.Sort((o, o1) => (string.IsNullOrWhiteSpace(o.DisplayName) && !string.IsNullOrWhiteSpace(o1.DisplayName))?1: (!string.IsNullOrWhiteSpace(o.DisplayName) && string.IsNullOrWhiteSpace(o1.DisplayName))?-1:0);
+                            detailArr.Sort((o, o1) => (string.IsNullOrWhiteSpace(o.DisplayName) && !string.IsNullOrWhiteSpace(o1.DisplayName))?1: (!string.IsNullOrWhiteSpace(o.DisplayName) && string.IsNullOrWhiteSpace(o1.DisplayName))?-1:0);
 
-                        if (detailArr.Count > 0)
-                        {
-                            LayerData ld = new LayerData()
+                            if (detailArr.Count > 0)
                             {
-                                IsShowPushpin = false,
-                                IsShowGeometry = IsShowGeometry
-                            };
-                            if (string.IsNullOrWhiteSpace(LayerNewName))
+                                LayerData ld = new LayerData()
+                                {
+                                    IsShowPushpin = false,
+                                    IsShowGeometry = IsShowGeometry
+                                }; 
                                 ld.DisplayName = "Слой 'что здесь?' " + (LayerIndexCreate++);
 
-                            foreach (var a in detailArr)
-                                ld.Objects.Add(a);
-                            Layers.Add(ld);
-                            SelectedTabIndex = 1;
-                            MsgPrinterVM.Success($"Поиск завершен, найдено объектов: {detailArr.Count}!");
-                        }
-                        else
-                            MsgPrinterVM.Warning("Не найдено ни одного объекта поблизости!");
+                                foreach (var a in detailArr)
+                                    ld.Objects.Add(a);
+                                Layers.Add(ld);
+                                SelectedTabIndex = 1;
+                                MsgPrinterVM.Success($"Поиск завершен, найдено объектов: {detailArr.Count}!");
+                            }
+                            else
+                                MsgPrinterVM.Warning("Не найдено ни одного объекта поблизости!");
 
+                        }
+                        else {
+                            MsgPrinterVM.Error("Произошла ошибка при обращении к серверу!");
+                        }
                     }
-                    else {
-                        MsgPrinterVM.Error("Произошла ошибка при обращении к серверу!");
+                    catch (Exception exception)
+                    {
+                        Utils.pushCrashLog(exception);
+                        MsgPrinterVM.Error(exception.Message);
                     }
 
                     IsWhatThisActive = false;
@@ -1577,7 +1648,132 @@ public void SearchObjects(string json){
                        }));
             }
         }
+        private RelayCommand deleteOthers;
+        public RelayCommand DeleteOthers
+        {
+            get
+            {
+                return deleteOthers ??
+                       (deleteOthers = new RelayCommand(obj => {
+                           if (obj is MapObject o){
+                               for (int i = o.Layer.Objects.Count - 1; i >= 0; i--){
+                                   if (o != o.Layer.Objects[i])
+                                   {
+                                       var delete = o.Layer.Objects[i];
+                                       o.Layer.Objects.Remove(delete);
+                                       SelectedLayerList.Remove(delete);
+                                   }
+                               }
+                           }
 
+                       }));
+            }
+        }
+        private RelayCommand selectPolyAsZone;
+        public RelayCommand SelectPolyAsZone{
+            get{
+                return selectPolyAsZone ??
+                       (selectPolyAsZone = new RelayCommand(obj =>
+                       {
+                           if (obj is MapObject o && o.Geometry is MapPolygon mp)
+                           {
+                               Window.tab_search_objects.IsSelected = true;
+                               IsFindRect = true;
+                               var storage = (ServiceLayerVector.Data as MapItemStorage).Items;
+                               MapPolygonSelection.Points.Clear();
+                               storage.Clear();
+                               storage.Add(MapPolygonSelection);
+                               MapPolygonSelection.Visible = true;
+                               foreach (var pnt in mp.Points) {
+                                   MapPolygonSelection.Points.Add(pnt);
+                                   storage.Add(new MapDot()
+                                   {
+                                       Location = pnt,
+                                       Size = Config.DEFAULT_DOT_SIZE,
+                                       Fill = new SolidColorBrush(Color.FromArgb(80, 3, 32, 252)),
+                                       Stroke = new SolidColorBrush(Color.FromArgb(255, 3, 32, 252))
+                                   });
+                               }
+                           }
+                           else
+                               MsgPrinterVM.Error("У объекта не найдена геометрия полигона");
+
+                       }));
+            }
+        }
+        private RelayCommand selectPolyAsZoneImage;
+        public RelayCommand SelectPolyAsZoneImage {
+            get{
+                return selectPolyAsZoneImage ??
+                       (selectPolyAsZoneImage = new RelayCommand(obj => {
+                           if (obj is MapObject o && o.Geometry is MapPolygon mp) {
+                               Window.tab_mainpage.IsSelected = true;
+                               IsImageAreaActive = true;
+                               var storage = (ServiceLayerVector.Data as MapItemStorage).Items;
+                               MapPolygonSelection.Points.Clear();
+                               storage.Clear();
+                               storage.Add(MapPolygonSelection);
+                               MapPolygonSelection.Visible = true;
+                               foreach (var pnt in mp.Points) {
+                                   MapPolygonSelection.Points.Add(pnt);
+                                   storage.Add(new MapDot()
+                                   {
+                                       Location = pnt,
+                                       Size = Config.DEFAULT_DOT_SIZE,
+                                       Fill = new SolidColorBrush(Color.FromArgb(80, 3, 32, 252)),
+                                       Stroke = new SolidColorBrush(Color.FromArgb(255, 3, 32, 252))
+                                   });
+                               }
+                           }
+                           else
+                               MsgPrinterVM.Error("У объекта не найдена геометрия полигона");
+
+                       }));
+            }
+        }
+
+        private RelayCommand createHouse;
+        public RelayCommand CreateHouse{
+            get{
+                return createHouse ??
+                       (createHouse = new RelayCommand(obj =>
+                       {
+                           if (obj is MapObject o){//OSM API
+                               if (o.TypeData == "draw" && o.Geometry is MapPolygon mp)
+                               {
+                                   try
+                                   {
+                                       var roads = Utils.SearchObjectsWithRestrictPoint((GeoPoint) mp.GetCenter(),
+                                           @"{""highway"":[""*""]}", 50, true, true, false, false);
+                                       roads = roads.Where(mapObject => !string.IsNullOrWhiteSpace(mapObject.DisplayName))
+                                           .ToList();
+                                       CreateHouse ch = new CreateHouse();
+                                       foreach (var mapObject in roads)
+                                           ch.Streets.Add(mapObject.DisplayName);
+                                       if (ch.ShowDialog().GetValueOrDefault(false))
+                                       {
+                                           if (Utils.CreateHouse(ch.HouseNumber, ch.SelectedStreet, ch.CheckedType,
+                                               mp.Points.ToList().Select(point => (GeoPoint) point).ToList()))
+                                               MsgPrinterVM.Success("Запрос на добавление строения отправлен изменения появятся в течении 5 минут!");
+                                       }
+                                   }
+                                   catch (Exception e)
+                                   {
+                                       Utils.pushCrashLog(e);
+                                        MsgPrinterVM.Error("Произошла ошибка: "+e.Message);
+                                        return;
+                                   }
+
+
+
+                               }
+                               else
+                                   MsgPrinterVM.Error("Создание дома можно сделать только на объекте типа полигон, на слое рисования!");
+                           }
+
+                       }));
+            }
+        }
         private RelayCommand changeAddr;
         public RelayCommand ChangeAddr
         {
@@ -1588,10 +1784,35 @@ public void SearchObjects(string json){
                        {
                            if (obj is MapObject o){//OSM API
                                if (o.TypeData == "map" && !string.IsNullOrWhiteSpace(o.OsmId) && !string.IsNullOrWhiteSpace(o.Type) && (o.Type == "way" || o.Type == "node" || o.Type == "relation")){
-                                  
+                                   string num = "";
+                                   var item = o.Tags.FirstOrDefault(value => value.Tag == "house_number");
+                                   if (item != null)
+                                       num = item.Key;
+                                   Prompt prompt = new Prompt();
+                                   prompt.Text = num;
+                                   prompt.Label = "Введите новый номер дома(например 17а)";
+                                   prompt.Title = "Изменение номера дома";
+                                   prompt.Owner = Window;
+                                   if (prompt.ShowDialog().GetValueOrDefault(false)) {
+                                       try {
+                                           if (Utils.MsgBoxQuestion(
+                                                   "Вы уверены в правильности введенных данных? Ваши изменения увидит весь мир") !=
+                                               MessageBoxResult.Yes)
+                                           {
+                                               MsgPrinterVM.Warning("Изменение адреса прервано!");
+                                               return;
+                                           }
+
+                                           Utils.ChangeHouseNumber(o.Type, o.OsmId, prompt.Text);
+                                           MsgPrinterVM.Success("Запрос на изменение адреса отправлен изменения появятся в течении 5 минут!");
+                                       }
+                                       catch (Exception e){
+                                           MsgPrinterVM.Error(e.Message);
+                                       }
+                                   }
                                }
                                else
-                                   MsgPrinterVM.Error("Адрес этого объекта невозможно изменить, недостаточно данных!");
+                                   MsgPrinterVM.Error("Адрес этого объекта нельзя менять!");
                            }
 
                        }));
@@ -1821,8 +2042,11 @@ public void SearchObjects(string json){
                 return selectKit ??
                        (selectKit = new RelayCommand(obj =>
                        {
-                           if(obj != null && obj is KitSelection ks)
-                            SearchObjects(ks.Json);
+                           if (obj != null && obj is KitSelection ks)
+                           {
+                               LayerNewName = ks.Name;
+                               SearchObjects(ks.Json);
+                           }
                        }));
             }
         }
@@ -1922,6 +2146,142 @@ public void SearchObjects(string json){
                                });
                                PrintHelper.ShowRibbonPrintPreviewDialog(Window, rl);
                            }
+                       }));
+            }
+        }
+        private RelayCommand setCurentScale;
+        public RelayCommand SetCurentScale {
+            get {
+                return setCurentScale ??
+                       (setCurentScale = new RelayCommand(obj =>
+                       {
+                           ScaleImage = (decimal) Math.Round(Window.mapControl.ZoomLevel);
+                           OnPropertyChanged("ScaleImage");
+                       }));
+            }
+        }
+        private RelayCommand beginSaveImage;
+        public RelayCommand BeginSaveImage {
+            get {
+                return beginSaveImage ??
+                       (beginSaveImage = new RelayCommand(obj => {
+
+                           if (MapPolygonSelection == null || MapPolygonSelection.Points.Count < 3)
+                           {
+                               MsgPrinterVM.Error("Сначала выделите зону!");
+                               return;
+                           }
+
+                           /*var q= Utils.Test(MapPolygonSelection, (int)ScaleImage, IsCropImage);
+                           foreach (var mapPolygon in q)
+                           {
+                               (ServiceLayerVector.Data as MapItemStorage).Items.Add(mapPolygon);
+
+                           }
+                           return;*/
+
+                           XtraSaveFileDialog sfd = new XtraSaveFileDialog ();
+                           sfd.Filter = "PNG|*.png";
+                           sfd.FileName = "Снимок карты";
+                           
+                           //sfd.FileName = "D:\\test.png";
+
+                           if (sfd.ShowDialog(new Win32WindowWrapper(Window)) != DialogResult.OK)
+                               return;
+                           MapTileSourceBase mtsb =null;
+                           if (Window.imageLayer.DataProvider.GetType().GetProperty("TileSource") != null)
+                               mtsb = Window.imageLayer.DataProvider.GetType().GetProperty("TileSource")
+                                   .GetValue(Window.imageLayer.DataProvider) as MapTileSourceBase;
+                           else
+                           {
+                               MsgPrinterVM.Error("Данный провайдер не поддерживает эту операцию!");
+                               return;
+                           }
+
+                           string file = sfd.FileName;
+                           var cancelToken = WaitVMM.ShowWithCancel();
+                           int zoom = (int)ScaleImage;
+                           var tiles = Utils.GetAreaTileList(MapPolygonSelection, zoom, IsCropImage);
+                           var polygonPixels = MapPolygonSelection.Points.Select(point => Utils.GetPixelFromCoord((GeoPoint)point, zoom)).Select(point => new PointF((float)point.X, (float)point.Y)).ToArray();
+
+                           var b = MapPolygonSelection.GetBounds();
+                           var lt = Utils.GetTileFromCoord(new GeoPoint(b.Top, b.Left), zoom);
+                           float xMin = (float) (lt.X*256);
+                           float yMin = (float) (lt.Y * 256);
+                           polygonPixels = polygonPixels.Select(f => new PointF(f.X - xMin, f.Y - yMin)).ToArray();
+
+                           Task.Run(() => {
+                               try {
+                                   WaitVMM.WaitText = $"Загружено 0/{tiles.Count}";
+
+                                   int x = (int) tiles.Select(point => point.X).Min();
+                                   int xmax = (int) tiles.Select(point => point.X).Max();
+                                   int xcount = xmax - x + 1;
+
+                                   int y = (int) tiles.Select(point => point.Y).Min();
+                                   int ymax = (int) tiles.Select(point => point.Y).Max();
+                                   int ycount = ymax - y + 1;
+                                   var tileSize = new Size(256,256);
+
+                                   Bitmap bmp = new Bitmap((int)(tileSize.Width * xcount), (int)(tileSize.Height * ycount));
+                                   int loaded = 0;
+                                   using (var g = Graphics.FromImage(bmp)) {
+                                       if (IsCropImage) {
+                                           GraphicsPath gp = new GraphicsPath();
+                                           gp.AddPolygon(polygonPixels);
+                                           g.Clip = new Region(gp);
+                                       }
+
+                                       foreach (var gPoint in tiles) {
+                                           var pos = new PointF((int)((gPoint.X - x) * tileSize.Width), (int)((gPoint.Y - y) * tileSize.Height));
+                                           var request = new HttpRequestMessage(HttpMethod.Get,
+                                               mtsb.GetTileByZoomLevel(zoom, (long) gPoint.X, (long)gPoint.Y));
+                                           request.Headers.Add("user-agent","OsmMapViewer");
+                                           request.Headers.Referrer = new Uri("https://www.openstreetmap.org/");
+                                           var task = httpClient.SendAsync(request);
+                                           task.Wait();
+                                           if(task.Status != TaskStatus.RanToCompletion){
+                                               if (task.Exception != null)
+                                                   throw task.Exception;
+                                               throw new Exception("Произошла ошибка при выполнении задачи");
+                                           }
+                                           if (task.Result.StatusCode != HttpStatusCode.OK){
+                                               var err = task.Result.Content.ReadAsStringAsync();
+                                               err.Wait();
+                                               throw new Exception("Ошибка обращения к серверу!\r\nОтвет сервера:" + err.Result);
+                                           }
+                                           var st = task.Result.Content.ReadAsStreamAsync();
+                                           st.Wait();
+                                           g.DrawImage(System.Drawing.Image.FromStream(st.Result), pos);
+                                           st.Result.Close();
+                                           loaded++;
+                                           if (cancelToken.IsCancellationRequested)
+                                           {
+                                               WaitVMM.WaitVisible = false;
+                                               return;
+                                           }
+
+                                               WaitVMM.WaitText = "Загружено " + loaded + "/" + tiles.Count.ToString();
+                                       }
+
+                                   }
+                                   bmp.Save(file);
+                                   bmp.Dispose();
+
+
+                                MsgPrinterVM.Success($"Формирование завершено! Файл сохранён по пути {file}");
+                               }
+                               catch (Exception exception) {
+                                   Utils.pushCrashLog(exception);
+                                   MsgPrinterVM.Error("Произошла ошибка при загрузке: " + exception.Message);
+                                   WaitVMM.WaitVisible = false;
+                               }
+
+                               IsImageAreaActive = false;
+                               WaitVMM.WaitVisible = false;
+                           });
+
+
                        }));
             }
         }

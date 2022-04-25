@@ -45,7 +45,7 @@
                 <dxb:BarButtonItem Content="BarButtonItem"/>
             </dxr:RibbonControl.ToolbarItems>
             <dxr:RibbonDefaultPageCategory>
-                <dxr:RibbonPage Caption="Главная">
+                <dxr:RibbonPage Caption="Главная" x:Name="tab_mainpage">
                     <dxr:RibbonPageGroup Caption="Позиция">
                         <dxb:BarEditItem Content="Широта" EditWidth="100" EditValue="{Binding CoordPosLat}">
                             <dxb:BarEditItem.EditSettings>
@@ -66,10 +66,21 @@
                         <dxb:BarCheckItem IsChecked="{Binding IsWhatThisActive}" Content="Что здесь находится?" Glyph="{dx:DXImage SvgImages/DiagramIcons/BindingEditorHelpIcon.svg}" RibbonStyle="Large"/>
                         <dxb:BarCheckItem IsChecked="{Binding IsCopyCoordActive}" Content="Получить координаты" Glyph="{dx:DXImage SvgImages/DiagramIcons/Copy.svg}" RibbonStyle="Large"/>
                     </dxr:RibbonPageGroup>
+                    <dxr:RibbonPageGroup Caption="Сформировать изображение">
+                        <dxb:BarCheckItem IsChecked="{Binding IsImageAreaActive}" Content="Выбрать зону" Glyph="{dx:DXImage SvgImages/Chart/ChartType_PolarArea.svg}" RibbonStyle="Large"/>
+                        <dxb:BarEditItem EditValue="{Binding ScaleImage}" Content="Масштаб" Glyph="{dx:DXImage SvgImages/PDF Viewer/MarqueeZoom.svg}" EditWidth="80">
+                                <dxb:BarEditItem.EditSettings>
+                                    <dxe:SpinEditSettings  MinValue="0" Mask="d" MaxValue="18" HorizontalContentAlignment="Left"/>
+                                </dxb:BarEditItem.EditSettings>
+                        </dxb:BarEditItem>
+                        <dxb:BarButtonItem Command="{Binding SetCurentScale}" Content="Выбрать текущий масштаб карты" Glyph="{dx:DXImage SvgImages/PDF Viewer/Zoom.svg}"/>
+                        <dxb:BarCheckItem Content="Обрезать по выделению"  Glyph="{dx:DXImage SvgImages/Actions/NewTableStyle.svg}" IsChecked="{Binding IsCropImage}"/>
+                        <dxb:BarButtonItem Command="{Binding BeginSaveImage}" Content="Сформировать изображение" Glyph="{dx:DXImage SvgImages/XAF/ModelEditor_ImageSources.svg}" RibbonStyle="Large"/>
+                    </dxr:RibbonPageGroup>
                 </dxr:RibbonPage>
             </dxr:RibbonDefaultPageCategory>
             <dxr:RibbonPageCategory Caption="Найти на карте" Color="#FF92B250">
-                <dxr:RibbonPage  Caption="Поиск объектов">
+                <dxr:RibbonPage  Caption="Поиск объектов" x:Name="tab_search_objects">
                     <dxr:RibbonPageGroup Caption="Выбор зоны">
                         <dxb:BarCheckItem  Content="Вся карта" RibbonStyle="Large" GroupIndex="21" IsChecked="{Binding IsFindAllMap}" LargeGlyph="{dx:DXImage SvgImages/Dashboards/DefaultMap.svg}"/>
                         <dxb:BarCheckItem Content="Полигон" RibbonStyle="Large" IsChecked="{Binding IsFindRect}" GroupIndex="21" LargeGlyph="{dx:DXImage SvgImages/Chart/ChartType_PolarLine.svg}"/>
@@ -359,7 +370,19 @@
                                                 <ContextMenu Tag="{Binding Source={x:Reference MainWind},Path= DataContext}">
                                                     <MenuItem Header="Переименовать" CommandParameter="{Binding}"  Command="{Binding Path=Tag.RenameObject, RelativeSource={RelativeSource AncestorType=ContextMenu,Mode=FindAncestor}}"></MenuItem>
                                                     <MenuItem Header="Удалить" CommandParameter="{Binding}"  Command="{Binding Path=Tag.DeleteObject, RelativeSource={RelativeSource AncestorType=ContextMenu,Mode=FindAncestor}}"></MenuItem>
-                                                    <MenuItem Header="Изменить номер дома" CommandParameter="{Binding}"  Command="{Binding Path=Tag.ChangeAddr, RelativeSource={RelativeSource AncestorType=ContextMenu,Mode=FindAncestor}}"></MenuItem>
+                                                    <MenuItem Header="Дополнительно">
+                                                        <MenuItem.Items>
+                                                            <MenuItem Header="Выделить полигон как зону поиска" CommandParameter="{Binding}"  Command="{Binding Path=Tag.SelectPolyAsZone, RelativeSource={RelativeSource AncestorType=ContextMenu,Mode=FindAncestor}}"></MenuItem>
+                                                            <MenuItem Header="Удалить из слоя все объекты кроме этого" CommandParameter="{Binding}"  Command="{Binding Path=Tag.DeleteOthers, RelativeSource={RelativeSource AncestorType=ContextMenu,Mode=FindAncestor}}"></MenuItem>
+                                                            <MenuItem Header="Выделить полигон как зону формирования изображения" CommandParameter="{Binding}"  Command="{Binding Path=Tag.SelectPolyAsZoneImage, RelativeSource={RelativeSource AncestorType=ContextMenu,Mode=FindAncestor}}"></MenuItem>
+                                                        </MenuItem.Items>
+                                                    </MenuItem>
+                                                    <MenuItem Header="Внесение изменений">
+                                                        <MenuItem.Items>
+                                                            <MenuItem Header="Изменить номер дома" CommandParameter="{Binding}"  Command="{Binding Path=Tag.ChangeAddr, RelativeSource={RelativeSource AncestorType=ContextMenu,Mode=FindAncestor}}"></MenuItem>
+                                                            <MenuItem Header="Создать дом" CommandParameter="{Binding}"  Command="{Binding Path=Tag.CreateHouse, RelativeSource={RelativeSource AncestorType=ContextMenu,Mode=FindAncestor}}"></MenuItem>
+                                                        </MenuItem.Items>
+                                                    </MenuItem>
                                                 </ContextMenu>
                                             </Border.ContextMenu>
                                             <TextBlock HorizontalAlignment="Left" FontSize="13" Text="{Binding DisplayNameLabel}" TextWrapping="Wrap" Foreground="#FF0170BB" >

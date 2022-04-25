@@ -109,7 +109,8 @@ foreach ($tables as $key=>$cols){
 			return !empty($element);
 		});
 		$vals = array_unique($vals);
-			
+		
+		
 		foreach($vals as $k=>$vl)
 			$vals[$k] = "'".addcslashes(mb_strtolower(trim($vl)),"'\"")."'";
 		$col = "";
@@ -117,6 +118,12 @@ foreach ($tables as $key=>$cols){
 			$col = "\"$tag\"";
 		else
 			$col ="\"tags\"->'$tag'";
+		
+		if(in_array("'*'",$vals)){//Искать любое
+			array_push($exps," lower($col) IS NOT NULL ");
+			continue;
+		}
+		
 		$v = "";
 		$oper = "";
 		if(count($vals) > 1){

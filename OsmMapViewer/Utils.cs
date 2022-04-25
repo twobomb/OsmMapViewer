@@ -25,10 +25,43 @@ using System.Net;
 using System.Xml;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using DevExpress.Map.Kml.Model;
+using DevExpress.Mvvm.POCO;
+using DevExpress.Xpf.Map.Native;
+using Point = System.Windows.Point;
 
 namespace OsmMapViewer
 {
+
     public static class Utils{
+
+        public static List<MapObject> SearchObjectsWithRestrictPoint(GeoPoint p, string tagsJson = "[]", int rad = 50,bool IsIntersectsType = false, bool isLine = true, bool isPolygon = true, bool isPoint = true) {
+            string jsonReq = $@"{{""tags"":{tagsJson},""params"":{{""line"":{ (isLine?"1":"0")},""polygon"":{(isPolygon? "1" : "0")},""point"":{(isPoint? "1" : "0")}}}";
+
+            jsonReq += ",\"restrict_point_radius\":{ \"lon\":" + p.GetX().ToString().Replace(',', '.') +
+                           ",\"lat\":" + p.GetY().ToString().Replace(',', '.') + ",\"radius_meter\":" + rad+
+                           "}";
+            if (IsIntersectsType)
+                jsonReq += ",\"restrict_type\":\"intersects\"";
+            jsonReq += "}";
+            var task = httpClient.PostAsync(Config.GET_DATA, new StringContent(jsonReq, Encoding.UTF8));
+            task.Wait(20000);
+            if (task.Status == TaskStatus.RanToCompletion && task.Result.StatusCode == HttpStatusCode.OK) {
+                var tz = task.Result.Content.ReadAsStringAsync();
+                tz.Wait();
+                string res = tz.Result;
+                List<MapObject> resultArr = new List<MapObject>();
+                resultArr.AddRange(Utils.ParseObjects(res));
+
+                return resultArr;
+            }
+            else
+                throw new Exception("Произошла ошибка при обращении к серверу!");
+        }
+
+
+
+
         //osm API-------------------------------------------------------
 
         private static readonly HttpClient httpClient = new HttpClient();
@@ -39,11 +72,6 @@ namespace OsmMapViewer
                 throw new Exception("Неверный тип :"+type);
             if(string.IsNullOrEmpty(osmId))
                 throw new Exception("OSM ID не может быть пустым!");
-            
-            WebClient client = new WebClient();
-            client.Encoding = Encoding.UTF8;
-            //client.Headers.Add(HttpRequestHeader.UserAgent, "OsmMapViewer");
-
 
             var task = httpClient.GetAsync(String.Format("{0}api/0.6/{1}/{2}", Config.API_OSM, type, osmId));
             task.Wait(15000);
@@ -63,11 +91,50 @@ namespace OsmMapViewer
                 throw new Exception("Не удалось получить ответ от сервера");
         }
 
-        public static string UpdateOsmData(string xml, string type, string osm_id){
+        public static string CreateChangesetOsm(string comment,string login,string pwd)
+        {
+            var content = new StringContent($@"
+<osm>
+    <changeset>
+        <tag k=""created_by"" v=""OsmMapViewer"" />
+		<tag k=""comment"" v=""{comment}""/>
+    </changeset>
+</osm>");
 
+            var authenticationString = $"{login}:{pwd}";
+            var base64EncodedAuthenticationString = Convert.ToBase64String(System.Text.ASCIIEncoding.ASCII.GetBytes(authenticationString));
+            var requestMessage = new HttpRequestMessage(HttpMethod.Put, String.Format("{0}api/0.6/changeset/create", Config.API_OSM));
+            requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Basic", base64EncodedAuthenticationString);
+            requestMessage.Content = content;
+            var task = httpClient.SendAsync(requestMessage);
+            task.Wait(20000);
+            if (task.Status == TaskStatus.RanToCompletion){
+                var tz = task.Result.Content.ReadAsStringAsync();
+                tz.Wait(20000);
+                var res = tz.Result;
+                if (task.Result.StatusCode == HttpStatusCode.OK){
+                    return res;
+                }else
+                    throw new Exception("Ошибка, ответ сервера " + task.Result.StatusCode.ToString() + "\r\n" + res);
+            }
+            else if (task.Exception != null)
+                throw task.Exception;
+            else
+                throw new Exception("Не удалось получить ответ от сервера");
+        }
+        public static bool CloseChangesetOsm(string changeset,string login,string pwd){
+            var authenticationString = $"{login}:{pwd}";
+            var base64EncodedAuthenticationString = Convert.ToBase64String(System.Text.ASCIIEncoding.ASCII.GetBytes(authenticationString));
+            var requestMessage = new HttpRequestMessage(HttpMethod.Put, String.Format("{0}api/0.6/changeset/{1}/close", Config.API_OSM, changeset));
+            requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Basic", base64EncodedAuthenticationString);
+            var task = httpClient.SendAsync(requestMessage);
+            task.Wait(20000);
+            return task.Status == TaskStatus.RanToCompletion && task.Result.StatusCode == HttpStatusCode.OK;
+        }
+        public static string UpdateOsmData(string xml, string type, string osm_id, string login,string pwd){
             var content = new StringContent(xml, Encoding.UTF8);
 
-            var authenticationString = "twobomb:svp080709";
+            var authenticationString = $"{login}:{pwd}";
             var base64EncodedAuthenticationString = Convert.ToBase64String(System.Text.ASCIIEncoding.ASCII.GetBytes(authenticationString));
 
             var requestMessage = new HttpRequestMessage(HttpMethod.Put, String.Format("{0}api/0.6/{1}/{2}", Config.API_OSM, type, osm_id));
@@ -91,11 +158,54 @@ namespace OsmMapViewer
             else
                 throw new Exception("Не удалось получить ответ от сервера");
         }
-        public static string ChangeHouseNumber(string xml,string type,string osm_id, string newNumber) {
+        public static string CreateOsmData(string xml, string type,string login,string pwd){
+            var content = new StringContent(xml, Encoding.UTF8);
+            var authenticationString = $"{login}:{pwd}";
+            var base64EncodedAuthenticationString = Convert.ToBase64String(System.Text.ASCIIEncoding.ASCII.GetBytes(authenticationString));
+
+            var requestMessage = new HttpRequestMessage(HttpMethod.Put, String.Format("{0}api/0.6/{1}/create", Config.API_OSM, type));
+            requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Basic", base64EncodedAuthenticationString);
+            requestMessage.Content = content;
+
+            var task = httpClient.SendAsync(requestMessage);
+            task.Wait(20000);
+            if (task.Status == TaskStatus.RanToCompletion){
+                var tz = task.Result.Content.ReadAsStringAsync();
+                tz.Wait(20000);
+                var res = tz.Result;
+                if (task.Result.StatusCode == HttpStatusCode.OK){
+                    return res;
+                }else
+                    throw new Exception("Ошибка, ответ сервера " + task.Result.StatusCode.ToString() + "\r\n" + res);
+            }
+            else if (task.Exception != null)
+                throw task.Exception;
+            else
+                throw new Exception("Не удалось получить ответ от сервера");
+        }
+        public static bool ChangeHouseNumber(string type,string osm_id, string newNumber) {
+            var xml = Utils.GetOsmData(type,osm_id);
+
+            var changeset = Utils.CreateChangesetOsm("Изменение номера дома", Config.login_osm,Config.pwd_osm);
+
             var doc = new XmlDocument();
             doc.LoadXml(xml);
+
             XmlNode node = doc.SelectSingleNode($"//osm/{type}[@id='{osm_id}']");
-            if (node != null){
+            if (node != null) {
+                XmlElement nodeElement = (XmlElement) node;
+                if (nodeElement.Attributes["timestamp"] != null)
+                    nodeElement.Attributes.Remove(nodeElement.Attributes["timestamp"]);
+                if (nodeElement.Attributes["changeset"] != null)
+                    nodeElement.Attributes.Remove(nodeElement.Attributes["changeset"]);
+                if (nodeElement.Attributes["user"] != null)
+                    nodeElement.Attributes.Remove(nodeElement.Attributes["user"]);
+                if (nodeElement.Attributes["uid"] != null)
+                    nodeElement.Attributes.Remove(nodeElement.Attributes["uid"]);
+
+                nodeElement.SetAttribute("changeset", changeset);
+
+
                 XmlElement tag = (XmlElement)node.SelectSingleNode("tag[@k='addr:housenumber']");
                 if (tag != null)
                     tag.SetAttribute("v", newNumber);
@@ -106,17 +216,268 @@ namespace OsmMapViewer
                     tag.SetAttribute("v", newNumber);
                     node.AppendChild(tag);
                 }
-                return doc.InnerXml;
+                Utils.UpdateOsmData(doc.InnerXml, type,osm_id,Config.login_osm,Config.pwd_osm);
+                try{
+                    CloseChangesetOsm(changeset, Config.login_osm, Config.pwd_osm);
+                }
+                catch (Exception e){}
+
+                return true;
             }
             else
                 throw new Exception("Не найден элемент "+type);
+        }
+        public static bool CreateHouse(string addr,string street,string housetype,List<GeoPoint> points){
+            var changeset = Utils.CreateChangesetOsm("Добавление дома", Config.login_osm,Config.pwd_osm);
+
+            string nodes = "";
+            string firstNode = "";
+            for (int i = 0; i < points.Count; i++)
+            {
+                var p = points[i];
+                string node = $@"
+<osm>
+	<node changeset=""{changeset}"" lat=""{p.GetY().ToString().Replace(",",".")}"" lon=""{p.GetX().ToString().Replace(",", ".")}"">
+	</node>
+</osm>";
+                nodes += $"<nd ref=\"{CreateOsmData(node, "node", Config.login_osm, Config.pwd_osm)}\"/>\r\n";
+                if (i == 0)
+                    firstNode = nodes;
+            }
+
+            nodes += firstNode;
+
+            string way = $@"
+<osm>
+	<way changeset=""{changeset}"">
+		<tag k=""addr:housenumber"" v=""{addr}""/>
+		<tag k=""addr:street"" v=""{street}""/>
+		<tag k=""building"" v=""{housetype}""/>
+		{nodes}
+	</way>
+</osm>";
+            CreateOsmData(way, "way", Config.login_osm, Config.pwd_osm);
+            try{
+                CloseChangesetOsm(changeset, Config.login_osm, Config.pwd_osm);
+            }
+            catch (Exception e){}
+
+            return true;
         }
 
         //osm API END-------------------------------------------------------
 
 
 
+        public static List<MapPolygon> Test(MapPolygon area, int zoom, bool isCrop = true)
+        {
 
+            List<MapPolygon> list = new List<MapPolygon>();
+            var b = area.GetBounds();
+            var polygon = area.Points.Select(point => GetPixelFromCoord((GeoPoint) point,zoom)).ToArray();
+
+            var lt = GetTileFromCoord(new GeoPoint(b.Top, b.Left), zoom);
+            var rb = GetTileFromCoord(new GeoPoint(b.Bottom, b.Right), zoom, false);
+
+            int xCount = (int)Math.Abs(lt.X - rb.X);
+            int yCount = (int)Math.Abs(lt.Y - rb.Y);
+
+            int xStart = (int)Math.Min(lt.X, rb.X);
+            int yStart = (int)Math.Min(lt.Y, rb.Y);
+
+            List<Point> res = new List<Point>();
+
+            
+            for (int x = 0; x < xCount; x++)
+            for (int y = 0; y < yCount; y++){
+                if (isCrop){
+                    var bnd = GetCoordsBoundsFromTile(xStart + x, yStart + y, zoom);
+                    var t = new MapPolygon();
+                    t.Points.Add(new GeoPoint(bnd.Top,bnd.Left));
+                    t.Points.Add(new GeoPoint(bnd.Top,bnd.Right));
+                    t.Points.Add(new GeoPoint(bnd.Bottom, bnd.Right));
+                    t.Points.Add(new GeoPoint(bnd.Bottom,bnd.Left));
+                    Utils.ApplyStrokeStyle(t, Brushes.Blue);
+
+                    Rect boundPixels = new Rect((xStart + x) * 256, (yStart + y) * 256, 256, 256);
+
+                    if (polyRect(polygon, boundPixels.Left, boundPixels.Top, boundPixels.Width, boundPixels.Height))
+                        Utils.ApplyFillStyle(t, new SolidColorBrush(Color.FromArgb(80,0,255,0)));
+                    else
+                        Utils.ApplyFillStyle(t, new SolidColorBrush(Color.FromArgb(80,255,0,0)));
+                    Utils.ApplyBorderSize(t, 2);
+                    list.Add(t);
+                }
+                //res.Add(new Point(xStart + x, yStart + y));
+            }
+
+            return list;
+        }
+        //Получить список тайлов для скачивания из зоны, isCrop = true, тайлы на пределами полигона будут пустые
+        public static List<Point> GetAreaTileList(MapPolygon area,int zoom, bool isCrop = true){
+            var b = area.GetBounds();
+            var polygon = area.Points.Select(point => GetPixelFromCoord((GeoPoint)point, zoom)).ToArray();
+
+            var lt = GetTileFromCoord(new GeoPoint(b.Top, b.Left), zoom);
+            var rb = GetTileFromCoord(new GeoPoint(b.Bottom, b.Right), zoom, false);
+
+            int xCount = (int)Math.Abs(lt.X - rb.X);
+            int yCount = (int)Math.Abs(lt.Y - rb.Y);
+
+            int xStart = (int)Math.Min(lt.X, rb.X);
+            int yStart = (int)Math.Min(lt.Y, rb.Y);
+
+            List<Point> res  = new List<Point>();
+
+            for (int x = 0; x < xCount; x++)
+                for (int y = 0; y < yCount; y++){
+                    if (isCrop) {
+                        //var bnd = GetCoordsBoundsFromTile(xStart + x, yStart + y, zoom);
+                        Rect boundPixels = new Rect((xStart + x) * 256, (yStart + y) * 256, 256, 256);
+                        if (!pointRect(polygon[0].X, polygon[0].Y, boundPixels.Left, boundPixels.Top, boundPixels.Width, boundPixels.Height) && !polygonPoint(polygon, boundPixels.Left, boundPixels.Top) && !polyRect(polygon, boundPixels.Left, boundPixels.Top, boundPixels.Width, boundPixels.Height))
+                            continue;
+                    }
+                    res.Add(new Point(xStart+x,yStart+y));
+                }
+
+            return res;
+        }
+
+        // POINT/RECTANGLE
+        public static bool pointRect(double px, double py, double rx, double ry, double rw, double rh) {
+            if (px >= rx &&        // right of the left edge AND
+                px <= rx + rw &&   // left of the right edge AND
+                py >= ry &&        // below the top AND
+                py <= ry + rh)
+            {   // above the bottom
+                return true;
+            }
+            return false;
+        }
+        // POLYGON/RECTANGLE
+        public static bool polyRect(Point[] vertices, double rx, double ry, double rw, double rh){
+            int next = 0;
+            for (int current = 0; current < vertices.Length; current++) {
+                next = current + 1;
+                if (next == vertices.Length) next = 0;
+                Point vc = vertices[current];    // c for "current"
+                Point vn = vertices[next];       // n for "next"
+                bool collision = lineRect(vc.X, vc.Y, vn.X, vn.Y, rx, ry, rw, rh);
+                if (collision) return true;
+                bool inside = polygonPoint(vertices, rx, ry);
+                if (inside) return true;
+            }
+            return false;
+        }
+
+        // LINE/RECTANGLE
+        public static bool lineRect(double x1, double y1, double x2, double y2, double rx, double ry, double rw, double rh){
+            bool left = lineLine(x1, y1, x2, y2, rx, ry, rx, ry + rh);
+            bool right = lineLine(x1, y1, x2, y2, rx + rw, ry, rx + rw, ry + rh);
+            bool top = lineLine(x1, y1, x2, y2, rx, ry, rx + rw, ry);
+            bool bottom = lineLine(x1, y1, x2, y2, rx, ry + rh, rx + rw, ry + rh);
+            if (left || right || top || bottom)
+            {
+                return true;
+            }
+            return false;
+        }
+        // LINE/LINE
+        public static bool lineLine(double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4){
+
+            // calculate the direction of the lines
+            double uA = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / ((y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1));
+            double uB = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / ((y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1));
+
+            // if uA and uB are between 0-1, lines are colliding
+            if (uA >= 0 && uA <= 1 && uB >= 0 && uB <= 1)
+            {
+                return true;
+            }
+            return false;
+        }
+        // POLYGON/POINT
+        public static bool polygonPoint(Point[] vertices, double px, double py){
+            bool collision = false;
+            int next = 0;
+            for (int current = 0; current < vertices.Length; current++){
+                next = current + 1;
+                if (next == vertices.Length) next = 0;
+                Point vc = vertices[current];    // c for "current"
+                Point vn = vertices[next];       // n for "next"
+                if (((vc.Y > py && vn.Y < py) || (vc.Y < py && vn.Y > py)) &&
+                    (px < (vn.X - vc.X) * (py - vc.Y) / (vn.Y - vc.Y) + vc.X))
+                {
+                    collision = !collision;
+                }
+            }
+            return collision;
+        }
+        //Получить координаты тайла из координатов geppoint
+        public static Point GetTileFromCoord(GeoPoint gp,int zoom, bool roundFloor = true, int tileSize = 256 ){
+            var pixel = GetPixelFromCoord(gp, zoom, tileSize);
+            if (roundFloor)
+                return new Point(Math.Floor(pixel.X/ tileSize), Math.Floor(pixel.Y/ tileSize));
+            else
+                return new Point(Math.Ceiling(pixel.X/ tileSize), Math.Ceiling(pixel.Y/ tileSize));
+        }
+        //Получить координаты пикселя из координатов geppoint
+        public static Point GetPixelFromCoord(GeoPoint gp,int zoom, int tileSize = 256 ){
+            var sinLatitude = Math.Sin(gp.Latitude * Math.PI / 180);
+            var pixelX = ((gp.Longitude + 180) / 360) * tileSize * Math.Pow(2, zoom);
+            var pixelY = (0.5f - Math.Log((1 + sinLatitude) / (1 - sinLatitude)) / (4 * Math.PI)) *tileSize * Math.Pow(2, zoom);
+
+            return new Point(pixelX, pixelY);
+        }
+        //Получить координаты широта\долгота середины тайла
+        public static GeoPoint GetCoordCenterFromTile(int tileX, int tileY, int zoom, int tileSize = 256) {
+            var pixel  = new double[]
+            {
+                tileX * tileSize + tileSize / 2,
+                tileY * tileSize + tileSize / 2
+            };
+            var mapSize = MapSize(zoom, tileSize);
+            var x = (Clip(pixel[0], 0, mapSize - 1) / mapSize) - 0.5;
+            var y = 0.5 - (Clip(pixel[1], 0, mapSize - 1) / mapSize);
+            return new GeoPoint(
+                90 - 360 * Math.Atan(Math.Exp(-y * 2 * Math.PI)) / Math.PI,  //Latitude
+                360 * x   //Longitude
+            );
+        }
+        //Получить bbox тайла
+        public static MapBounds GetCoordsBoundsFromTile(int tileX, int tileY, int zoom, int tileSize = 256){
+            var pixel  = new double[]{
+                tileX * tileSize ,
+                tileY * tileSize 
+            };
+            var mapSize = MapSize(zoom, tileSize);
+            var x = (Clip(pixel[0], 0, mapSize - 1) / mapSize) - 0.5;
+            var y = 0.5 - (Clip(pixel[1], 0, mapSize - 1) / mapSize);
+            var g1 = new GeoPoint(
+                90 - 360 * Math.Atan(Math.Exp(-y * 2 * Math.PI)) / Math.PI,  //Latitude
+                360 * x   //Longitude
+            );
+            pixel  = new double[]{
+                tileX * tileSize + tileSize,
+                tileY * tileSize + tileSize
+            };
+            x = (Clip(pixel[0], 0, mapSize - 1) / mapSize) - 0.5;
+            y = 0.5 - (Clip(pixel[1], 0, mapSize - 1) / mapSize);
+            var g2 = new GeoPoint(
+                90 - 360 * Math.Atan(Math.Exp(-y * 2 * Math.PI)) / Math.PI,  //Latitude
+                360 * x   //Longitude
+            );
+            return new MapBounds(g1, g2);
+        }
+        
+        public static double MapSize(double zoom, int tileSize)
+        {
+            return Math.Ceiling(tileSize * Math.Pow(2, zoom));
+        }
+        private static double Clip(double n, double minValue, double maxValue)
+        {
+            return Math.Min(Math.Max(n, minValue), maxValue);
+        }
         public static void pushCrashLog(Exception e) {
             UnhandledExceptionEventArgs ex = new UnhandledExceptionEventArgs(e, false);
             ((App)App.Current).CurrentDomain_UnhandledException(null, ex);
@@ -486,10 +847,13 @@ namespace OsmMapViewer
                     
 
                 mo.Tags.Add(new TagValue() { Tag = "osm_id", Key = mo.OsmId });
+                if (item.address != null)
+                    foreach (var v in item.address)
+                        mo.Tags.Add(new TagValue() { Tag = v.Name.ToString(), Key = v.Value.ToString() });
                 if (item.extratags != null)
                         foreach (var v in item.extratags)
                             mo.Tags.Add(new TagValue(){Tag = v.Name.ToString(),Key = v.Value.ToString()});
-
+                
                     if(item.geojson != null){
                         mo.RawGeoJson = item.geojson.ToString();
                     }
