@@ -37,13 +37,8 @@
                 </Style>
             </dxr:RibbonControl.Style>
             <dxr:RibbonControl.PageHeaderItems>
-                <dxb:BarButtonItem Content="BarButtonItem"/>
-                <dxb:BarButtonItem Content="BarButtonItem"/>
+                <dxb:BarButtonItem Content="Справка по программе" Glyph="{dx:DXImage SvgImages/DiagramIcons/BindingEditorHelpIcon.svg}" RibbonStyle="Default"/>
             </dxr:RibbonControl.PageHeaderItems>
-            <dxr:RibbonControl.ToolbarItems>
-                <dxb:BarButtonItemLink BarItemName="newItem"/>
-                <dxb:BarButtonItem Content="BarButtonItem"/>
-            </dxr:RibbonControl.ToolbarItems>
             <dxr:RibbonDefaultPageCategory>
                 <dxr:RibbonPage Caption="Главная" x:Name="tab_mainpage">
                     <dxr:RibbonPageGroup Caption="Позиция">

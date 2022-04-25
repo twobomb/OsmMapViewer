@@ -2226,6 +2226,7 @@ public void SearchObjects(string json){
                                    Bitmap bmp = new Bitmap((int)(tileSize.Width * xcount), (int)(tileSize.Height * ycount));
                                    int loaded = 0;
                                    using (var g = Graphics.FromImage(bmp)) {
+                                        g.FillRectangle(new SolidBrush(System.Drawing.Color.FromArgb(255, 237, 237, 237)),0,0,bmp.Width,bmp.Height);
                                        if (IsCropImage) {
                                            GraphicsPath gp = new GraphicsPath();
                                            gp.AddPolygon(polygonPixels);
