@@ -7,8 +7,7 @@ using System.Windows.Media;
 
 namespace OsmMapViewer.Misc
 {
-    public static class Config
-    {
+    public static class Config {
 
         public static string login_osm = "twobomb";
         public static string pwd_osm = "svp080709";
@@ -29,6 +28,8 @@ namespace OsmMapViewer.Misc
         //public const string API_OSM = "https://api.openstreetmap.org/"; //production
         public const string API_OSM = "https://master.apis.dev.openstreetmap.org/"; //test
 
+        public const string BingKey =
+            "TQJlJkdqn8eblIn2ndan~z1_5jmraoFpBYePLV-eYSg~Ah9W-VI_DJOOzIzE5sXX2KD6cnS4vIa2yWFj_J1KE2z_y910L2KjRV54D2SZsmM8";
 
         //public const string TILE_SERVER_TEMPLATE = "http://10.113.0.183/hot/{tileLevel}/{tileX}/{tileY}.png";
         public const string TILE_SERVER_TEMPLATE = "https://tile.openstreetmap.org/{tileLevel}/{tileX}/{tileY}.png";

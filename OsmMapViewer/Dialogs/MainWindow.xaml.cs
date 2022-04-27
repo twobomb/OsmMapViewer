@@ -36,7 +36,6 @@ namespace OsmMapViewer
     public partial class MainWindow : ThemedWindow
     {
 
-        public ImageLayer imageLayer;
         public MainWindow(){
             System.Net.ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
 
@@ -66,14 +65,9 @@ namespace OsmMapViewer
             {
                 Visible = false
             };
-            imageLayer = new ImageLayer();
-            mapControl.Layers.Insert(0, imageLayer);
-            OpenStreetMapDataProvider provider = new OpenStreetMapDataProvider();
+            
 
-            imageLayer.DataProvider = provider;
 
-            provider.TileUriTemplate = Config.TILE_SERVER_TEMPLATE;
-            provider.WebRequest += Provider_WebRequest;
 
             mapControl.ZoomLevel = 16;
             mapControl.CenterPoint = new GeoPoint( 48.5684458000654, 39.3150812432244);
@@ -88,11 +82,6 @@ namespace OsmMapViewer
 
 
 
-        private void Provider_WebRequest(object sender, MapWebRequestEventArgs e)
-        {
-            e.Referer = "https://www.openstreetmap.org/";
-            e.UserAgent = "OsmMapViewer";
-        }
 
         //Автоподгрузка элементов по скроллу 
         private void lb_layerItemsBox_ScrollChanged(object sender, ScrollChangedEventArgs e){

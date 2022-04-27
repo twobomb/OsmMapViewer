@@ -38,6 +38,7 @@
             </dxr:RibbonControl.Style>
             <dxr:RibbonControl.PageHeaderItems>
                 <dxb:BarButtonItem Content="Справка по программе" Glyph="{dx:DXImage SvgImages/DiagramIcons/BindingEditorHelpIcon.svg}" RibbonStyle="Default"/>
+                <dxb:BarButtonItem Content="Настройки" Glyph="{dx:DXImage SvgImages/HybridDemoIcons/BottomPanel/HybridDemo_Settings.svg}"/>
             </dxr:RibbonControl.PageHeaderItems>
             <dxr:RibbonDefaultPageCategory>
                 <dxr:RibbonPage Caption="Главная" x:Name="tab_mainpage">
@@ -71,6 +72,13 @@
                         <dxb:BarButtonItem Command="{Binding SetCurentScale}" Content="Выбрать текущий масштаб карты" Glyph="{dx:DXImage SvgImages/PDF Viewer/Zoom.svg}"/>
                         <dxb:BarCheckItem Content="Обрезать по выделению"  Glyph="{dx:DXImage SvgImages/Actions/NewTableStyle.svg}" IsChecked="{Binding IsCropImage}"/>
                         <dxb:BarButtonItem Command="{Binding BeginSaveImage}" Content="Сформировать изображение" Glyph="{dx:DXImage SvgImages/XAF/ModelEditor_ImageSources.svg}" RibbonStyle="Large"/>
+                    </dxr:RibbonPageGroup>
+                    <dxr:RibbonPageGroup Caption="Провайдер карты">
+                        <dxb:BarEditItem Glyph="{dx:DXImage SvgImages/Business Objects/BO_Localization.svg}" EditValue="{Binding MapProviderSelected}">
+                            <dxb:BarEditItem.EditSettings>
+                                <dxe:ComboBoxEditSettings  IsTextEditable="False" ItemsSource="{Binding MapProviders}"/>
+                            </dxb:BarEditItem.EditSettings>
+                        </dxb:BarEditItem>
                     </dxr:RibbonPageGroup>
                 </dxr:RibbonPage>
             </dxr:RibbonDefaultPageCategory>

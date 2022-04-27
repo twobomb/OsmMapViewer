@@ -50,10 +50,51 @@ using Timer = System.Timers.Timer;
 
 namespace OsmMapViewer.ViewModel
 {
-    public class MainWindowViewModel: ViewModelBase{
+    public class MainWindowViewModel: ViewModelBase
+    {
 
 
-#region Получить координаты R4
+        
+        public List<string> MapProviders { get; set; } = new List<string>()
+        {
+            "Локальная OSM(без интернета)",
+            "Bind спутник(от интернета)",
+        };
+
+
+        public ImageLayer MapLayer;
+        public string _MapProviderSelected;
+
+        public string MapProviderSelected{
+            get
+            {
+                return _MapProviderSelected;
+            }
+            set
+            {
+                if (SetProperty(ref _MapProviderSelected, value)) {
+                    switch (MapProviders.IndexOf(value)) {
+                        case 1:
+                            BingMapDataProvider bindProvider = new BingMapDataProvider();
+                            MapLayer.DataProvider = bindProvider;
+                            bindProvider.Kind = BingMapKind.Hybrid;
+                            bindProvider.BingKey = Config.BingKey;
+                            break;
+                        default:
+                            OpenStreetMapDataProvider provider = new OpenStreetMapDataProvider();
+                            MapLayer.DataProvider = provider;
+                            provider.TileUriTemplate = Config.TILE_SERVER_TEMPLATE;
+                            provider.WebRequest+= (sender, e)=>{
+                                e.Referer = "https://www.openstreetmap.org/";
+                                e.UserAgent = "OsmMapViewer";
+                            };
+                            break;
+                    }
+                }
+            }
+        }
+
+        #region Получить координаты R4
 
         public bool _IsCopyCoordActive = false;
 
@@ -835,6 +876,8 @@ public Decimal SizeBorderDrawing {
                 if(args.Key == Key.Delete)
                     RemoveSelectedLayer.Execute(null);
             };
+            MapLayer = new ImageLayer();
+            Window.mapControl.Layers.Insert(0, MapLayer);
             MsgPrinterVM = new MsgPrinterViewModel(Window);
             searchTimer.Elapsed += (sender, args) => Search(SearchText);
             //Слой для результатов поиска
@@ -844,6 +887,8 @@ public Decimal SizeBorderDrawing {
 
             Window.mapControl.SelectionMode = ElementSelectionMode.None;
             Window.mapControl.EnableRotation = CanRotateMap;
+
+            MapProviderSelected = MapProviders[0];
 
 
             RulerList.CollectionChanged += (sender, args) =>{
@@ -2189,9 +2234,9 @@ public void SearchObjects(string json){
                            if (sfd.ShowDialog(new Win32WindowWrapper(Window)) != DialogResult.OK)
                                return;
                            MapTileSourceBase mtsb =null;
-                           if (Window.imageLayer.DataProvider.GetType().GetProperty("TileSource") != null)
-                               mtsb = Window.imageLayer.DataProvider.GetType().GetProperty("TileSource")
-                                   .GetValue(Window.imageLayer.DataProvider) as MapTileSourceBase;
+                           if (MapLayer.DataProvider.GetType().GetProperty("TileSource") != null)
+                               mtsb = MapLayer.DataProvider.GetType().GetProperty("TileSource")
+                                   .GetValue(MapLayer.DataProvider) as MapTileSourceBase;
                            else
                            {
                                MsgPrinterVM.Error("Данный провайдер не поддерживает эту операцию!");
