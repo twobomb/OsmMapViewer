@@ -31,13 +31,10 @@
             <ColumnDefinition Width="Auto"></ColumnDefinition>
             <ColumnDefinition Width="Auto" ></ColumnDefinition>
         </Grid.ColumnDefinitions>
-        <Label FontSize="14" Content="Номер дома" Margin="5"></Label>
+        <Label FontSize="14" Content="Номер дома(например 24а)" Margin="5"></Label>
         <TextBox  FontSize="14" HorizontalAlignment="Left" Text="{Binding HouseNumber}" Width="80" Grid.Column="1" Margin="5"></TextBox>
 
-        <Label FontSize="14" Content="Улица" Grid.Row="1" Margin="5"></Label>
-        <ComboBox  Grid.Row="1" Grid.Column="1" Width="400" IsEditable="True" ItemsSource="{Binding Streets}" Text="{Binding SelectedStreet}"  Margin="5"></ComboBox>
-
-        <Label FontSize="14" Content="Улица" Grid.Row="1" Margin="5"></Label>
+        <Label FontSize="14" Content="Улица(формат %Название% улица, например Оборонная улица)" Grid.Row="1" Margin="5"></Label>
         <ComboBox  Grid.Row="1" Grid.Column="1" Width="400" IsEditable="True" ItemsSource="{Binding Streets}" Text="{Binding SelectedStreet}"  Margin="5"></ComboBox>
 
         <Label FontSize="14" Content="Тип строения" Grid.Row="2" Margin="5"></Label>

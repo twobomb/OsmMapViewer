@@ -218,6 +218,9 @@
     <EmbeddedResource Include="ReportLayer.resx">
       <DependentUpon>ReportLayer.cs</DependentUpon>
     </EmbeddedResource>
+    <Content Include="help.chm">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>

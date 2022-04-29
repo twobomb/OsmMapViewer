@@ -8,5 +8,32 @@
     <Setting Name="Layers" Type="System.String" Scope="User">
       <Value Profile="(Default)" />
     </Setting>
+    <Setting Name="login_osm" Type="System.String" Scope="User">
+      <Value Profile="(Default)">mchs_lpr</Value>
+    </Setting>
+    <Setting Name="pwd_osm" Type="System.String" Scope="User">
+      <Value Profile="(Default)">lbgfgths</Value>
+    </Setting>
+    <Setting Name="GET_DATA" Type="System.String" Scope="User">
+      <Value Profile="(Default)">http://10.113.0.183/api/get_data.php</Value>
+    </Setting>
+    <Setting Name="NOMINATIM_HOST" Type="System.String" Scope="User">
+      <Value Profile="(Default)">http://10.113.0.183/nominatim/</Value>
+    </Setting>
+    <Setting Name="NOMINATIM_SEARCH" Type="System.String" Scope="User">
+      <Value Profile="(Default)">search.php</Value>
+    </Setting>
+    <Setting Name="NOMINATIM_LOOKUP" Type="System.String" Scope="User">
+      <Value Profile="(Default)">lookup.php</Value>
+    </Setting>
+    <Setting Name="API_OSM" Type="System.String" Scope="User">
+      <Value Profile="(Default)">https://api.openstreetmap.org/</Value>
+    </Setting>
+    <Setting Name="BingKey" Type="System.String" Scope="User">
+      <Value Profile="(Default)">TQJlJkdqn8eblIn2ndan~z1_5jmraoFpBYePLV-eYSg~Ah9W-VI_DJOOzIzE5sXX2KD6cnS4vIa2yWFj_J1KE2z_y910L2KjRV54D2SZsmM8</Value>
+    </Setting>
+    <Setting Name="TILE_SERVER_TEMPLATE" Type="System.String" Scope="User">
+      <Value Profile="(Default)">http://10.113.0.183/hot/{tileLevel}/{tileX}/{tileY}.png</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

@@ -30,8 +30,7 @@ using DevExpress.Mvvm.POCO;
 using DevExpress.Xpf.Map.Native;
 using Point = System.Windows.Point;
 
-namespace OsmMapViewer
-{
+namespace OsmMapViewer{
 
     public static class Utils{
 

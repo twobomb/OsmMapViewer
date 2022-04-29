@@ -40,6 +40,7 @@ namespace OsmMapViewer
             System.Net.ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
 
             InitializeComponent();
+            Config.InitData();
 
             DataContext = new MainWindowViewModel(this);
 

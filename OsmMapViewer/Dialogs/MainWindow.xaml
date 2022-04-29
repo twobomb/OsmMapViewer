@@ -37,8 +37,8 @@
                 </Style>
             </dxr:RibbonControl.Style>
             <dxr:RibbonControl.PageHeaderItems>
-                <dxb:BarButtonItem Content="Справка по программе" Glyph="{dx:DXImage SvgImages/DiagramIcons/BindingEditorHelpIcon.svg}" RibbonStyle="Default"/>
-                <dxb:BarButtonItem Content="Настройки" Glyph="{dx:DXImage SvgImages/HybridDemoIcons/BottomPanel/HybridDemo_Settings.svg}"/>
+                <dxb:BarButtonItem Command="{Binding OpenHelp}" Content="Справка по программе" Glyph="{dx:DXImage SvgImages/DiagramIcons/BindingEditorHelpIcon.svg}" RibbonStyle="Default"/>
+                <dxb:BarButtonItem Command="{Binding OpenSettings}" Content="Настройки" Glyph="{dx:DXImage SvgImages/HybridDemoIcons/BottomPanel/HybridDemo_Settings.svg}"/>
             </dxr:RibbonControl.PageHeaderItems>
             <dxr:RibbonDefaultPageCategory>
                 <dxr:RibbonPage Caption="Главная" x:Name="tab_mainpage">
@@ -79,6 +79,7 @@
                                 <dxe:ComboBoxEditSettings  IsTextEditable="False" ItemsSource="{Binding MapProviders}"/>
                             </dxb:BarEditItem.EditSettings>
                         </dxb:BarEditItem>
+                        <dxb:BarStaticItem Content="Ctrl+R" Glyph="{dx:DXImage SvgImages/Icon Builder/Electronics_Keyboard.svg}" ContentAlignment="Right"/>
                     </dxr:RibbonPageGroup>
                 </dxr:RibbonPage>
             </dxr:RibbonDefaultPageCategory>
@@ -185,7 +186,7 @@
 
                     </dxr:RibbonPageGroup>
                     <dxr:RibbonPageGroup Caption="Дополнительно">
-                        <dxb:BarButtonItem Content="Справка по меню поиска объектов" Glyph="{dx:DXImage SvgImages/Icon Builder/Actions_Question.svg}" RibbonStyle="Large"/>
+                        <dxb:BarButtonItem Content="Справка"  Command="{Binding OpenHelp}" Glyph="{dx:DXImage SvgImages/Icon Builder/Actions_Question.svg}" RibbonStyle="Large"/>
                     </dxr:RibbonPageGroup>
                 </dxr:RibbonPage>
 

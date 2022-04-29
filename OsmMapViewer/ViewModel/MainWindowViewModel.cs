@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Printing;
@@ -72,17 +73,21 @@ namespace OsmMapViewer.ViewModel
             }
             set
             {
-                if (SetProperty(ref _MapProviderSelected, value)) {
-                    switch (MapProviders.IndexOf(value)) {
+                SetProperty(ref _MapProviderSelected, value);
+                    switch (MapProviders.IndexOf(value)){
                         case 1:
                             BingMapDataProvider bindProvider = new BingMapDataProvider();
-                            MapLayer.DataProvider = bindProvider;
                             bindProvider.Kind = BingMapKind.Hybrid;
                             bindProvider.BingKey = Config.BingKey;
+                            MapLayer.DataProvider = bindProvider;
                             break;
                         default:
                             OpenStreetMapDataProvider provider = new OpenStreetMapDataProvider();
                             MapLayer.DataProvider = provider;
+                            provider.CacheOptions = new CacheOptions()
+                            {
+                                KeepInterval = TimeSpan.FromMinutes(10)
+                            };
                             provider.TileUriTemplate = Config.TILE_SERVER_TEMPLATE;
                             provider.WebRequest+= (sender, e)=>{
                                 e.Referer = "https://www.openstreetmap.org/";
@@ -90,7 +95,6 @@ namespace OsmMapViewer.ViewModel
                             };
                             break;
                     }
-                }
             }
         }
 
@@ -875,6 +879,10 @@ public Decimal SizeBorderDrawing {
             {
                 if(args.Key == Key.Delete)
                     RemoveSelectedLayer.Execute(null);
+                if(Keyboard.Modifiers == ModifierKeys.Control && args.Key == Key.R)
+                {
+                    MapProviderSelected = MapProviders.First(q => q != MapProviderSelected);
+                }
             };
             MapLayer = new ImageLayer();
             Window.mapControl.Layers.Insert(0, MapLayer);
@@ -1624,6 +1632,7 @@ public void SearchObjects(string json){
                                 ld.DisplayName = "Слой " + (LayerIndexCreate++);
                             else
                                 ld.DisplayName = LayerNewName;
+                            LayerNewName = "";
 
                             foreach (var a in resultArr)
                                 ld.Objects.Add(a);
@@ -1647,6 +1656,35 @@ public void SearchObjects(string json){
         }
 
 #region Commands
+        private RelayCommand openSettings;
+        public RelayCommand OpenSettings{
+            get{
+                return openSettings ??
+                       (openSettings = new RelayCommand(obj =>{
+                           SettingsDlg sd = new SettingsDlg();
+                           sd.Owner = Window;
+                           sd.ShowDialog();
+                           if (sd.IsHaveChanges){
+                               Config.InitData();
+                               MapProviderSelected = MapProviderSelected;
+                           }
+                       }));
+            }
+        }
+        private RelayCommand openHelp;
+        public RelayCommand OpenHelp{
+            get{
+                return openHelp ??
+                       (openHelp = new RelayCommand(obj =>{
+                           string path = Utils.GetExeDir() + "\\help.chm";
+                           if (!File.Exists(path))
+                               MsgPrinterVM.Error("Справка не найдена");
+                           else
+                               Process.Start(path);
+                           
+                       }));
+            }
+        }
         private RelayCommand renameObject;
         public RelayCommand RenameObject
         {
@@ -1789,7 +1827,7 @@ public void SearchObjects(string json){
                                    try
                                    {
                                        var roads = Utils.SearchObjectsWithRestrictPoint((GeoPoint) mp.GetCenter(),
-                                           @"{""highway"":[""*""]}", 50, true, true, false, false);
+                                           @"{""highway"":[""*""]}", 100, true, true, false, false);
                                        roads = roads.Where(mapObject => !string.IsNullOrWhiteSpace(mapObject.DisplayName))
                                            .ToList();
                                        CreateHouse ch = new CreateHouse();
