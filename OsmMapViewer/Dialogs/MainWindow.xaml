@@ -18,8 +18,8 @@
                     mc:Ignorable="designTime"
     
                      designTime:DataContext="{designTime:DesignInstance Type={x:Type viewModel:MainWindowViewModel}}"
-                     x:Class="OsmMapViewer.MainWindow"
-                     Title="Картограф" Height="658" Width="1400">
+                     x:Class="OsmMapViewer.Dialogs.MainWindow"
+                     Title="OsmMapViewer" Height="658" Width="1400">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>

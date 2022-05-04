@@ -15,8 +15,8 @@ using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using DevExpress.Xpf.Core;
 using DevExpress.Xpf.Grid.TreeList;
-using OsmMapViewer.Annotations;
 using OsmMapViewer.Models;
+using OsmMapViewer.Properties;
 
 
 namespace OsmMapViewer.Dialogs

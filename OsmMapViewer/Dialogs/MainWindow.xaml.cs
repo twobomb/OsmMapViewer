@@ -1,34 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Drawing.Drawing2D;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.Text;
+﻿using System.Net;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using System.Xml;
-using DevExpress.Map;
-using DevExpress.Xpf.Bars;
 using DevExpress.Xpf.Core;
-using DevExpress.Xpf.Grid;
-using DevExpress.Xpf.Grid.Printing;
 using DevExpress.Xpf.Map;
-using OsmMapViewer.Dialogs;
 using OsmMapViewer.Misc;
-using OsmMapViewer.Models;
+using OsmMapViewer.Properties;
 using OsmMapViewer.ViewModel;
 
-namespace OsmMapViewer
+namespace OsmMapViewer.Dialogs
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
@@ -39,8 +19,11 @@ namespace OsmMapViewer
         public MainWindow(){
             System.Net.ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
 
+            //ApplicationThemeHelper.ApplicationThemeName = Settings.Default.theme;
             InitializeComponent();
             Config.InitData();
+
+            
 
             DataContext = new MainWindowViewModel(this);
 

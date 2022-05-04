@@ -5,6 +5,7 @@ using System.Text;
 using OsmMapViewer.Misc;
 using System.Threading.Tasks;
 using System.Collections.ObjectModel;
+using OsmMapViewer.Dialogs;
 using OsmMapViewer.Models;
 
 namespace OsmMapViewer.ViewModel

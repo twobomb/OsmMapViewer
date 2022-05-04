@@ -26,6 +26,26 @@ namespace OsmMapViewer.Dialogs
         {
             InitializeComponent();
             UpdateData();
+
+         /*   var q = typeof(Theme).GetFields().Where(info => info.FieldType == typeof(Theme)).ToList();
+            q.Reverse();
+
+
+            foreach (var fieldInfo in q)
+            {
+                Theme t = (Theme) fieldInfo.GetValue(null);
+                cb_themes.Items.Add(t);
+                if (t.Name == Settings.Default.theme)
+                    cb_themes.SelectedIndex = cb_themes.Items.IndexOf(t);
+            }
+
+            cb_themes.SelectionChanged += (sender, args) =>
+            {
+                Settings.Default.theme = (cb_themes.SelectedItem as Theme).Name;
+                ApplicationThemeHelper.ApplicationThemeName = Settings.Default.theme;
+                Settings.Default.Save();
+            };*/
+
         }
 
         private void SimpleButton_Click(object sender, RoutedEventArgs e){

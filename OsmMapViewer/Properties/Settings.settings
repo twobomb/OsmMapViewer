@@ -35,5 +35,8 @@
     <Setting Name="TILE_SERVER_TEMPLATE" Type="System.String" Scope="User">
       <Value Profile="(Default)">http://10.113.0.183/hot/{tileLevel}/{tileX}/{tileY}.png</Value>
     </Setting>
+    <Setting Name="theme" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Win10Light</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

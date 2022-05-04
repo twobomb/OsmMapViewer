@@ -14,7 +14,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using DevExpress.Xpf.Core;
 using Newtonsoft.Json;
-using OsmMapViewer.Annotations;
+using OsmMapViewer.Properties;
 using OsmMapViewer.ViewModel;
 
 

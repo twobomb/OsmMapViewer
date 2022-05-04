@@ -7,7 +7,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using DevExpress.Xpf.Core.Native;
-using OsmMapViewer.Annotations;
+using OsmMapViewer.Properties;
 
 namespace OsmMapViewer.Models
 {

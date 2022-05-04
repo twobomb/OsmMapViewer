@@ -5,7 +5,8 @@
     xmlns:dx="http://schemas.devexpress.com/winfx/2008/xaml/core"
     ResizeMode="NoResize"
     WindowStartupLocation="CenterOwner"
-    Title="Настройки" Height="577.867" Width="604.024"
+    SizeToContent="WidthAndHeight"
+    Title="Настройки" 
     >
 
     <Grid HorizontalAlignment="Left">
@@ -101,6 +102,9 @@
                     </StackPanel>
                 </Grid>
             </GroupBox>
+            <!--<GroupBox Header="Темы">
+                <ComboBox x:Name="cb_themes"></ComboBox>
+            </GroupBox> -->
         </StackPanel>
 
     </Grid>
