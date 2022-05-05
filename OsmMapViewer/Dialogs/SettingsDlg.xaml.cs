@@ -46,12 +46,15 @@ namespace OsmMapViewer.Dialogs
 
             tb_nom_host.Text = Settings.Default.NOMINATIM_HOST;
             tb_nom_lookup.Text = Settings.Default.NOMINATIM_LOOKUP;
+            tb_nom_reverse.Text = Settings.Default.NOMINATIM_REVERSE;
             tb_nom_search.Text = Settings.Default.NOMINATIM_SEARCH;
 
             //3
             tb_tile_pattern.Text = Settings.Default.TILE_SERVER_TEMPLATE;
-
             //4
+            tb_route_host.Text = Settings.Default.OSRM_HOST;
+
+            //5
 
             tb_bing_key.Text = Settings.Default.BingKey;
             tb_get_data.Text = Settings.Default.GET_DATA;
@@ -71,6 +74,7 @@ namespace OsmMapViewer.Dialogs
         {
             Settings.Default.NOMINATIM_HOST = tb_nom_host.Text.Trim();
             Settings.Default.NOMINATIM_LOOKUP= tb_nom_lookup.Text.Trim();
+            Settings.Default.NOMINATIM_REVERSE= tb_nom_reverse.Text.Trim();
             Settings.Default.NOMINATIM_SEARCH= tb_nom_search.Text.Trim();
             Settings.Default.Save();
             IsHaveChanges = true;
@@ -80,6 +84,7 @@ namespace OsmMapViewer.Dialogs
             Settings.Default.NOMINATIM_HOST = Settings.Default.Properties["NOMINATIM_HOST"].DefaultValue.ToString();
             Settings.Default.NOMINATIM_SEARCH = Settings.Default.Properties["NOMINATIM_SEARCH"].DefaultValue.ToString();
             Settings.Default.NOMINATIM_LOOKUP = Settings.Default.Properties["NOMINATIM_LOOKUP"].DefaultValue.ToString();
+            Settings.Default.NOMINATIM_REVERSE = Settings.Default.Properties["NOMINATIM_REVERSE"].DefaultValue.ToString();
             Settings.Default.Save();
             IsHaveChanges = true;
             UpdateData();
@@ -112,6 +117,23 @@ namespace OsmMapViewer.Dialogs
         {
             Settings.Default.GET_DATA = Settings.Default.Properties["GET_DATA"].DefaultValue.ToString();
             Settings.Default.BingKey= Settings.Default.Properties["BingKey"].DefaultValue.ToString();
+            Settings.Default.Save();
+            IsHaveChanges = true;
+            UpdateData();
+
+        }
+
+        private void SimpleButton_Click_8(object sender, RoutedEventArgs e)
+        {
+            Settings.Default.OSRM_HOST = tb_route_host.Text.Trim();
+            Settings.Default.Save();
+            IsHaveChanges = true;
+
+        }
+
+        private void SimpleButton_Click_9(object sender, RoutedEventArgs e)
+        {
+            Settings.Default.OSRM_HOST = Settings.Default.Properties["OSRM_HOST"].DefaultValue.ToString();
             Settings.Default.Save();
             IsHaveChanges = true;
             UpdateData();

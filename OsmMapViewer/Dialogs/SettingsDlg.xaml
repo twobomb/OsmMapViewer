@@ -4,8 +4,9 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:dx="http://schemas.devexpress.com/winfx/2008/xaml/core"
     ResizeMode="NoResize"
+    SizeToContent="WidthAndHeight"
     WindowStartupLocation="CenterOwner"
-    Title="Настройки" Height="577.867" Width="604.024"
+    Title="Настройки" 
     >
 
     <Grid HorizontalAlignment="Left">
@@ -41,6 +42,7 @@
                         <RowDefinition Height="Auto"></RowDefinition>
                         <RowDefinition Height="Auto"></RowDefinition>
                         <RowDefinition Height="Auto"></RowDefinition>
+                        <RowDefinition Height="Auto"></RowDefinition>
                     </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"></ColumnDefinition>
@@ -52,7 +54,9 @@
                     <TextBox MinWidth="200" Grid.Row="1" Grid.Column="1" Margin="20 0 0 10"  x:Name="tb_nom_search"></TextBox>
                     <TextBlock Text="Lookup.php" Grid.Row="2"></TextBlock>
                     <TextBox MinWidth="200" Grid.Row="2" Grid.Column="1" Margin="20 0 0 10" x:Name="tb_nom_lookup"></TextBox>
-                    <StackPanel Grid.Row="3" Orientation="Horizontal" Grid.ColumnSpan="2">
+                    <TextBlock Text="Reverse.php" Grid.Row="3"></TextBlock>
+                    <TextBox MinWidth="200" Grid.Row="3" Grid.Column="1" Margin="20 0 0 10" x:Name="tb_nom_reverse"></TextBox>
+                    <StackPanel Grid.Row="4" Orientation="Horizontal" Grid.ColumnSpan="2">
                         <dx:SimpleButton Margin="0 0 10 0" Height="25" Background="Transparent" BorderBrush="Transparent" Cursor="Hand" Content="Сбросить по умолчанию" Glyph="{dx:DXImage SvgImages/Dashboards/ResetLayoutOptions.svg}" Click="SimpleButton_Click_3"/>
                         <dx:SimpleButton  Height="25" Background="Transparent" BorderBrush="Transparent" Cursor="Hand" Content="Сохранить" Glyph="{dx:DXImage SvgImages/XAF/Action_SaveScript.svg}" Click="SimpleButton_Click_2"/>
                     </StackPanel>
@@ -75,6 +79,26 @@
                     <StackPanel Grid.Row="3" Orientation="Horizontal" Grid.ColumnSpan="2">
                         <dx:SimpleButton Margin="0 0 10 0" Height="25" Background="Transparent" BorderBrush="Transparent" Cursor="Hand" Content="Сбросить по умолчанию" Glyph="{dx:DXImage SvgImages/Dashboards/ResetLayoutOptions.svg}" Click="SimpleButton_Click_5"/>
                         <dx:SimpleButton  Height="25" Background="Transparent" BorderBrush="Transparent" Cursor="Hand" Content="Сохранить" Glyph="{dx:DXImage SvgImages/XAF/Action_SaveScript.svg}" Click="SimpleButton_Click_4"/>
+                    </StackPanel>
+                </Grid>
+            </GroupBox>
+            <GroupBox Header="Сервер построения маршрутов">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"></RowDefinition>
+                        <RowDefinition Height="Auto"></RowDefinition>
+                        <RowDefinition Height="Auto"></RowDefinition>
+                        <RowDefinition Height="Auto"></RowDefinition>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"></ColumnDefinition>
+                        <ColumnDefinition Width="Auto"></ColumnDefinition>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Хост"></TextBlock>
+                    <TextBox MinWidth="400" Grid.Column="1" Margin="20 0 0 10"  x:Name="tb_route_host"></TextBox>
+                    <StackPanel Grid.Row="3" Orientation="Horizontal" Grid.ColumnSpan="2">
+                        <dx:SimpleButton Margin="0 0 10 0" Height="25" Background="Transparent" BorderBrush="Transparent" Cursor="Hand" Content="Сбросить по умолчанию" Glyph="{dx:DXImage SvgImages/Dashboards/ResetLayoutOptions.svg}" Click="SimpleButton_Click_9" />
+                        <dx:SimpleButton  Height="25" Background="Transparent" BorderBrush="Transparent" Cursor="Hand" Content="Сохранить" Glyph="{dx:DXImage SvgImages/XAF/Action_SaveScript.svg}" Click="SimpleButton_Click_8" />
                     </StackPanel>
                 </Grid>
             </GroupBox>

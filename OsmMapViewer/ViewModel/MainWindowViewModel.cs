@@ -98,6 +98,120 @@ namespace OsmMapViewer.ViewModel
             }
         }
 
+        #region  Маршруты RT
+
+        public GeoPoint RouteFromPoint { get; set; } 
+        public GeoPoint RouteToPoint { get; set; } 
+        public string RouteFromInput { get; set; } = "";
+        public string RouteToInput { get; set; } = "";
+        public ObservableCollection<RouteItem> Routes { get; set; } = new ObservableCollection<RouteItem>();
+        public RouteItem _RouteSelect = null;
+        public RouteItem RouteSelect
+        {
+            get => _RouteSelect;
+            set
+            {
+                if (SetProperty(ref _RouteSelect, value))
+                {
+                    UpdateRoutesVisual();
+                }
+            } }
+
+        public bool _IsSetModeFromRoute = false;
+        public bool IsSetModeFromRoute {
+            get => _IsSetModeFromRoute;
+            set
+            {
+                if (SetProperty(ref _IsSetModeFromRoute, value) && value)
+                    IsSetModeToRoute = false;
+            }
+        }
+
+        public bool _IsSetModeToRoute = false;
+        public bool IsSetModeToRoute {
+            get => _IsSetModeToRoute;
+            set
+            {
+                if (SetProperty(ref _IsSetModeToRoute, value) && value)
+                    IsSetModeFromRoute = false;
+            }
+        }
+
+        public void UpdateRoutesVisual() {
+            var storage = RouteLayerVector.Data as MapItemStorage;
+            storage.Items.Clear();
+            if (RouteFromPoint != null)
+                storage.Items.Add(new MapPushpin(){
+                    Location = RouteFromPoint,
+                    Brush = new SolidColorBrush(Color.FromArgb(128, 0, 0, 200))
+                });
+            if (RouteToPoint != null)
+                storage.Items.Add(new MapPushpin(){
+                    Location = RouteToPoint,
+                    Brush = new SolidColorBrush(Color.FromArgb(128, 200, 0, 0))
+                });
+            foreach (var routeItem in Routes){
+                if(routeItem == RouteSelect)
+                    continue;
+                Utils.ApplyBorderSize(routeItem.Object, 5);
+                Utils.ApplyBorderHighlightSize(routeItem.Object, 5);
+                Utils.ApplyStrokeStyle(routeItem.Object, new SolidColorBrush(Color.FromArgb(255, 160, 160, 160)));
+                Utils.ApplyStrokeHighlightStyle(routeItem.Object, Brushes.DeepSkyBlue);
+
+                //Utils.SetPropertyObject<Brush>(item, "Stroke", stroke);
+                storage.Items.Add(routeItem.Object);
+            }
+
+            if (RouteSelect != null) {
+                Utils.ApplyBorderSize(RouteSelect.Object, 5);
+                Utils.ApplyBorderHighlightSize(RouteSelect.Object, 5);
+                Utils.ApplyStrokeStyle(RouteSelect.Object, Brushes.BlueViolet);
+                Utils.ApplyStrokeHighlightStyle(RouteSelect.Object, Brushes.DeepSkyBlue);
+                storage.Items.Add(RouteSelect.Object);
+            }
+
+        }
+
+        public void UpdateRoutes(){
+            if (RouteFromPoint != null && RouteToPoint != null) {
+                List<RouteItem> res;
+                try {
+                    res = Utils.GetRoutes(RouteFromPoint, RouteToPoint);
+                    RouteSelect = null;
+                    Routes.Clear();
+                    foreach (var routeItem in res)
+                        Routes.Add(routeItem);
+                    if (Routes.Count > 0)
+                        RouteSelect = Routes[0];
+                }
+                catch (Exception e)
+                {
+                    MsgPrinterVM.Error(e.Message);
+                }
+            }
+
+            UpdateRoutesVisual();
+        }
+        private RelayCommand findFromRoute;
+        public RelayCommand FindFromRoute {
+            get {
+                return findFromRoute ??
+                       (findFromRoute = new RelayCommand(obj => {
+                           
+                       }));
+            }
+        }
+        private RelayCommand findToRoute;
+        public RelayCommand FindToRoute {
+            get {
+                return findToRoute ??
+                       (findToRoute = new RelayCommand(obj => {
+                           
+                       }));
+            }
+        }
+        #endregion
+
         #region Получить координаты R4
 
         public bool _IsCopyCoordActive = false;
@@ -754,6 +868,7 @@ public Decimal SizeBorderDrawing {
         //Слои
         public VectorLayer SearchResultVector { get; set; }
         public VectorLayer ServiceLayerVector { get; set; }
+        public VectorLayer RouteLayerVector { get; set; }
 
         public MsgPrinterViewModel MsgPrinterVM { get; set; }
         private static readonly HttpClient httpClient = new HttpClient();
@@ -898,6 +1013,24 @@ public Decimal SizeBorderDrawing {
 
             MapProviderSelected = MapProviders[0];
 
+            Routes.CollectionChanged += (sender, args) =>
+            {
+                switch (args.Action){
+                    case NotifyCollectionChangedAction.Add:
+                        foreach (var argsNewItem in args.NewItems)
+                        {
+                            if (argsNewItem is RouteItem ri)
+                            {
+                                ri.Object.MouseLeftButtonUp += (o, eventArgs) =>
+                                {
+                                    if(RouteSelect != ri)
+                                        RouteSelect = ri;
+                                };
+                            }
+                        }
+                        break;
+                }
+            };
 
             RulerList.CollectionChanged += (sender, args) =>{
                 (ServiceLayerVector.Data as MapItemStorage).Items.Clear();
@@ -966,7 +1099,13 @@ public Decimal SizeBorderDrawing {
             ServiceLayerVector.IsHitTestVisible = false;
             ServiceLayerVector.Data = new MapItemStorage();
 
+            RouteLayerVector = new VectorLayer();
+            RouteLayerVector.Data = new MapItemStorage();
+
+
+
             Window.mapControl.Layers.Add(ServiceLayerVector);
+            Window.mapControl.Layers.Add(RouteLayerVector);
 
             Window.RibbonControl.SelectedPageChanged += (sender, args) =>
             {
@@ -1284,6 +1423,38 @@ public Decimal SizeBorderDrawing {
                 
                 bool isClick = Utils.GetDistance(e.GetPosition(Window.mapControl),__mousedownpos) < 5;
                 CoordPoint p = Window.mapControl.ScreenPointToCoordPoint(e.GetPosition(Window.mapControl));
+
+                //маршруты
+                if (IsSetModeToRoute && isClick){
+                    RouteToPoint = (GeoPoint) p;
+                    IsSetModeToRoute = false;
+                    try
+                    {
+                        var data = Utils.NominatimReverse((GeoPoint) p);
+                        RouteToInput = data.DisplayName;
+                        OnPropertyChanged("RouteToInput");
+                    }
+                    catch (Exception exception) {
+                        MsgPrinterVM.Error(exception.Message);
+                    }
+                    UpdateRoutes();
+                }
+                if (IsSetModeFromRoute && isClick){
+                    RouteFromPoint = (GeoPoint) p;
+                    IsSetModeFromRoute = false;
+                    try
+                    {
+                        var data = Utils.NominatimReverse((GeoPoint)p);
+                        RouteFromInput = data.DisplayName;
+                        OnPropertyChanged("RouteFromInput");
+                    }
+                    catch (Exception exception)
+                    {
+                        MsgPrinterVM.Error(exception.Message);
+                    }
+                    UpdateRoutes();
+                }
+
                 //скопировать корды
                 if (IsCopyCoordActive && isClick){
                     var str = (p.GetY() + " " + p.GetX()).Replace(",", ".");

@@ -12,7 +12,7 @@ namespace OsmMapViewer.Properties {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "16.8.1.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "16.4.0.0")]
     internal sealed partial class Settings : global::System.Configuration.ApplicationSettingsBase {
         
         private static Settings defaultInstance = ((Settings)(global::System.Configuration.ApplicationSettingsBase.Synchronized(new Settings())));
@@ -153,6 +153,30 @@ namespace OsmMapViewer.Properties {
             }
             set {
                 this["TILE_SERVER_TEMPLATE"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("reverse.php")]
+        public string NOMINATIM_REVERSE {
+            get {
+                return ((string)(this["NOMINATIM_REVERSE"]));
+            }
+            set {
+                this["NOMINATIM_REVERSE"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("http://map.mchs.lnr:5000/")]
+        public string OSRM_HOST {
+            get {
+                return ((string)(this["OSRM_HOST"]));
+            }
+            set {
+                this["OSRM_HOST"] = value;
             }
         }
     }

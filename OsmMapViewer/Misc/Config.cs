@@ -17,6 +17,8 @@ namespace OsmMapViewer.Misc
             NOMINATIM_HOST = Settings.Default.NOMINATIM_HOST;
             NOMINATIM_SEARCH = Settings.Default.NOMINATIM_SEARCH;
             NOMINATIM_LOOKUP = Settings.Default.NOMINATIM_LOOKUP;
+            NOMINATIM_REVERSE= Settings.Default.NOMINATIM_REVERSE;
+            OSRM_HOST= Settings.Default.OSRM_HOST;
             API_OSM = Settings.Default.API_OSM;
             BingKey = Settings.Default.BingKey;
             TILE_SERVER_TEMPLATE = Settings.Default.TILE_SERVER_TEMPLATE;
@@ -29,6 +31,8 @@ namespace OsmMapViewer.Misc
         public static SolidColorBrush SELECT_BRUSH_BORDER = new SolidColorBrush(Colors.Aqua);
 
 
+        public static string OSRM_HOST = "https://routing.openstreetmap.de/routed-car/route/";
+
         public static string GET_DATA = "http://localhost/get_data.php";
         //public const string GET_DATA = "http://10.113.0.183/api/get_data.php";
 
@@ -36,6 +40,7 @@ namespace OsmMapViewer.Misc
         //public const string NOMINATIM_HOST = "http://10.113.0.183/nominatim/";
         public static string NOMINATIM_SEARCH = "search.php";
         public static string NOMINATIM_LOOKUP = "lookup.php";
+        public static string NOMINATIM_REVERSE = "reverse.php";
 
         public static string API_OSM = "https://api.openstreetmap.org/"; //production
         //public const string API_OSM = "https://master.apis.dev.openstreetmap.org/"; //test

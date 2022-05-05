@@ -65,9 +65,9 @@
                     <dxr:RibbonPageGroup Caption="Сформировать изображение">
                         <dxb:BarCheckItem IsChecked="{Binding IsImageAreaActive}" Content="Выбрать зону" Glyph="{dx:DXImage SvgImages/Chart/ChartType_PolarArea.svg}" RibbonStyle="Large"/>
                         <dxb:BarEditItem EditValue="{Binding ScaleImage}" Content="Масштаб" Glyph="{dx:DXImage SvgImages/PDF Viewer/MarqueeZoom.svg}" EditWidth="80">
-                                <dxb:BarEditItem.EditSettings>
-                                    <dxe:SpinEditSettings  MinValue="0" Mask="d" MaxValue="18" HorizontalContentAlignment="Left"/>
-                                </dxb:BarEditItem.EditSettings>
+                            <dxb:BarEditItem.EditSettings>
+                                <dxe:SpinEditSettings  MinValue="0" Mask="d" MaxValue="18" HorizontalContentAlignment="Left"/>
+                            </dxb:BarEditItem.EditSettings>
                         </dxb:BarEditItem>
                         <dxb:BarButtonItem Command="{Binding SetCurentScale}" Content="Выбрать текущий масштаб карты" Glyph="{dx:DXImage SvgImages/PDF Viewer/Zoom.svg}"/>
                         <dxb:BarCheckItem Content="Обрезать по выделению"  Glyph="{dx:DXImage SvgImages/Actions/NewTableStyle.svg}" IsChecked="{Binding IsCropImage}"/>
@@ -596,6 +596,101 @@
                         </Grid>
                     </Grid>
                 </dx:DXTabItem>
+                <dx:DXTabItem Header="Маршрут">
+                    <Grid Background="Transparent">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"></RowDefinition>
+                            <RowDefinition Height="*"></RowDefinition>
+                        </Grid.RowDefinitions>
+                        <StackPanel>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"></ColumnDefinition>
+                                    <ColumnDefinition Width="*"></ColumnDefinition>
+                                    <ColumnDefinition Width="Auto"></ColumnDefinition>
+                                    <ColumnDefinition Width="Auto"></ColumnDefinition>
+                                </Grid.ColumnDefinitions>
+                                <Border>
+                                    <Viewbox Width="16" Height="16" Margin="3 0 0 0">
+                                        <Canvas Width="24" Height="24">
+                                            <Path Fill="#FF616161" Data="M12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z" />
+                                        </Canvas>
+                                    </Viewbox>
+                                </Border>
+                                <dxe:TextEdit EditValue="{Binding RouteFromInput}" FontSize="14" Grid.Column="1"  NullText="Укажите пункт отправления" Margin="3"/>
+                                <dx:SimpleButton  Grid.Column="2" Command="{Binding FindFromRoute}" GlyphHeight="24" GlyphAlignment="Left" Glyph="{dx:DXImage SvgImages/HybridDemoIcons/Editors/HybridDemo_Search Button.svg}"/>
+                                <dx:SimpleButton ToolTip="Указать точку на карте" Grid.Column="3" IsChecked="{Binding IsSetModeFromRoute}" GlyphHeight="24" GlyphAlignment="Left" Glyph="{dx:DXImage SvgImages/Icon Builder/Business_Target.svg}" ButtonKind="Toggle"/>
+                            </Grid>
+                            <Grid Margin="0 15 0 0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"></ColumnDefinition>
+                                    <ColumnDefinition/>
+                                    <ColumnDefinition Width="Auto"></ColumnDefinition>
+                                    <ColumnDefinition Width="26"></ColumnDefinition>
+                                </Grid.ColumnDefinitions>
+                                <Border>
+                                    <Viewbox Width="16" Height="16" Margin="3 0 0 0">
+                                        <Canvas Width="24" Height="24">
+                                            <Path Fill="#FFCB0404" Data="M12,11.5A2.5,2.5 0 0,1 9.5,9A2.5,2.5 0 0,1 12,6.5A2.5,2.5 0 0,1 14.5,9A2.5,2.5 0 0,1 12,11.5M12,2A7,7 0 0,0 5,9C5,14.25 12,22 12,22C12,22 19,14.25 19,9A7,7 0 0,0 12,2Z" />
+                                        </Canvas>
+                                    </Viewbox>
+                                </Border>
+                                <dxe:TextEdit FontSize="14" Grid.Column="1" EditValue="{Binding RouteToInput}" NullText="Укажите пункт прибытия"  Margin="3"/>
+                                <dx:SimpleButton Grid.Column="2" Command="{Binding FindToRoute}" GlyphHeight="24" GlyphAlignment="Left" Glyph="{dx:DXImage SvgImages/HybridDemoIcons/Editors/HybridDemo_Search Button.svg}"/>
+                                <dx:SimpleButton IsChecked="{Binding IsSetModeToRoute}" ToolTip="Указать точку на карте" Grid.Column="3"  GlyphHeight="24" GlyphAlignment="Left" Glyph="{dx:DXImage SvgImages/Icon Builder/Business_Target.svg}" ButtonKind="Toggle"/>
+                            </Grid>
+                        </StackPanel>
+
+                        <ListBox Grid.Row="1" SelectedItem="{Binding RouteSelect}"  ItemsSource="{Binding Routes}" Padding="0"  HorizontalAlignment="Stretch"  ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="{x:Type ListBoxItem}">
+                                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                </Style>
+                            </ListBox.ItemContainerStyle>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Padding="5 10">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Style.Setters>
+                                                    <Setter Property="Background" Value="#FFECECEC"></Setter>
+                                                </Style.Setters>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType={x:Type ListBoxItem},Mode=FindAncestor},Path=IsSelected}" Value="True">
+                                                        <DataTrigger.Setters>
+                                                            <Setter Property="Background" Value="#FF03C4E2"></Setter>
+                                                        </DataTrigger.Setters>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <Grid >
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"></ColumnDefinition>
+                                                <ColumnDefinition Width="*"></ColumnDefinition>
+                                                <ColumnDefinition Width="Auto"></ColumnDefinition>
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"></RowDefinition>
+                                                <RowDefinition Height="Auto"></RowDefinition>
+                                            </Grid.RowDefinitions>
+                                            <Border Grid.RowSpan="2">
+                                                <Viewbox Width="24" Height="24">
+                                                    <Canvas Width="24" Height="24">
+                                                        <Path Fill="#FF7E7E7E" Data="M18,15A3,3 0 0,1 21,18A3,3 0 0,1 18,21C16.69,21 15.58,20.17 15.17,19H14V17H15.17C15.58,15.83 16.69,15 18,15M18,17A1,1 0 0,0 17,18A1,1 0 0,0 18,19A1,1 0 0,0 19,18A1,1 0 0,0 18,17M18,8A1.43,1.43 0 0,0 19.43,6.57C19.43,5.78 18.79,5.14 18,5.14C17.21,5.14 16.57,5.78 16.57,6.57A1.43,1.43 0 0,0 18,8M18,2.57A4,4 0 0,1 22,6.57C22,9.56 18,14 18,14C18,14 14,9.56 14,6.57A4,4 0 0,1 18,2.57M8.83,17H10V19H8.83C8.42,20.17 7.31,21 6,21A3,3 0 0,1 3,18C3,16.69 3.83,15.58 5,15.17V14H7V15.17C7.85,15.47 8.53,16.15 8.83,17M6,17A1,1 0 0,0 5,18A1,1 0 0,0 6,19A1,1 0 0,0 7,18A1,1 0 0,0 6,17M6,3A3,3 0 0,1 9,6C9,7.31 8.17,8.42 7,8.83V10H5V8.83C3.83,8.42 3,7.31 3,6A3,3 0 0,1 6,3M6,5A1,1 0 0,0 5,6A1,1 0 0,0 6,7A1,1 0 0,0 7,6A1,1 0 0,0 6,5M11,19V17H13V19H11M7,13H5V11H7V13Z" />
+                                                    </Canvas>
+                                                </Viewbox>
+                                            </Border>
+                                            <TextBlock FontSize="14" FontWeight="Bold" Margin="5 0 5 0" Grid.Column="1" Grid.RowSpan="2" TextWrapping="Wrap" Text="{Binding DisplayName}"></TextBlock>
+                                            <TextBlock Grid.Column="2" Text="{Binding DisplayDuration}"  TextAlignment="Right" FontSize="13"></TextBlock>
+                                            <TextBlock Grid.Column="2" Grid.Row="1" Text="{Binding DisplayDist}" TextAlignment="Right" FontSize="14" FontWeight="Bold"></TextBlock>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </Grid>
+                </dx:DXTabItem>
             </dx:DXTabControl>
 
             <GridSplitter Grid.Column="1" Grid.Row="1" Height="4"  ResizeDirection="Rows" HorizontalAlignment="Stretch"/>
@@ -736,6 +831,6 @@
                 </DataTemplate>
             </dx:WaitIndicator.ContentTemplate>
         </dx:WaitIndicator>
-        <misc:MsgPrinter Margin="0 60 0 25" Opacity="0.8" Grid.Row="0" Grid.RowSpan="3" DataContext="{Binding MsgPrinterVM}" HorizontalAlignment="Right" VerticalAlignment="Bottom" VerticalContentAlignment="Bottom" Height="Auto"/>
+        <misc:MsgPrinter designTime:IsHidden="true" Margin="0 60 0 25" Opacity="0.8" Grid.Row="0" Grid.RowSpan="3" DataContext="{Binding MsgPrinterVM}" HorizontalAlignment="Right" VerticalAlignment="Bottom" VerticalContentAlignment="Bottom" Height="Auto"/>
     </Grid>
 </dx:ThemedWindow>

@@ -35,5 +35,11 @@
     <Setting Name="TILE_SERVER_TEMPLATE" Type="System.String" Scope="User">
       <Value Profile="(Default)">http://10.113.0.183/hot/{tileLevel}/{tileX}/{tileY}.png</Value>
     </Setting>
+    <Setting Name="NOMINATIM_REVERSE" Type="System.String" Scope="User">
+      <Value Profile="(Default)">reverse.php</Value>
+    </Setting>
+    <Setting Name="OSRM_HOST" Type="System.String" Scope="User">
+      <Value Profile="(Default)">http://map.mchs.lnr:5000/</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

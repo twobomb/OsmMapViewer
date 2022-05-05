@@ -132,6 +132,7 @@
     <Compile Include="Models\LayerData.cs" />
     <Compile Include="Models\MapObject.cs" />
     <Compile Include="Models\ReportLayerModel.cs" />
+    <Compile Include="Models\RouteItem.cs" />
     <Compile Include="Models\TagValue.cs" />
     <Compile Include="Models\TreeViewTagValue.cs" />
     <Compile Include="Dialogs\Selector.xaml.cs">

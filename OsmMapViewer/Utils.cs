@@ -58,6 +58,56 @@ namespace OsmMapViewer{
                 throw new Exception("Произошла ошибка при обращении к серверу!");
         }
 
+        public static MapObject NominatimReverse(GeoPoint p) {
+            var requestMessage = new HttpRequestMessage(HttpMethod.Get, $@"{Config.NOMINATIM_HOST}{Config.NOMINATIM_REVERSE}?lat={p.Latitude.ToString().Replace(",", ".")}&lon={p.Longitude.ToString().Replace(",", ".")}&format=json&accept-language=ru&polygon_geojson=1&extratags=1");
+            requestMessage.Headers.Add("user-agent","OsmMapViewer");
+            requestMessage.Headers.Add("user-agent", "OsmMapViewer");
+            requestMessage.Headers.Referrer = new Uri("https://www.openstreetmap.org/");
+            var task = httpClient.SendAsync(requestMessage);
+            task.Wait(20000);
+            if (task.Status == TaskStatus.RanToCompletion && task.Result.StatusCode == HttpStatusCode.OK) {
+                var tz = task.Result.Content.ReadAsStringAsync();
+                tz.Wait();
+                string res = tz.Result;
+                List<MapObject> resultArr = Utils.ParseObjects("["+ res+"]");
+                if(resultArr.Count > 0)
+                    return resultArr[0];
+                else
+                    throw new Exception("Объекты не найдены");
+
+            }
+            else
+                throw new Exception("Произошла ошибка при обращении к серверу!");
+        }
+        public static List<RouteItem> GetRoutes(GeoPoint p1,GeoPoint p2) {
+            var requestMessage = new HttpRequestMessage(HttpMethod.Get, $@"{Config.OSRM_HOST}v1/driving/{p1.Longitude.ToString().Replace(",",".")},{p1.Latitude.ToString().Replace(",", ".")};{p2.Longitude.ToString().Replace(",", ".")},{p2.Latitude.ToString().Replace(",", ".")}?alternatives=true&steps=true&geometries=geojson&overview=full&annotations=true");
+            requestMessage.Headers.Add("user-agent","OsmMapViewer");
+            requestMessage.Headers.Add("user-agent", "OsmMapViewer");
+            requestMessage.Headers.Referrer = new Uri("https://www.openstreetmap.org/");
+            var task = httpClient.SendAsync(requestMessage);
+            task.Wait(20000);
+            if (task.Status == TaskStatus.RanToCompletion && task.Result.StatusCode == HttpStatusCode.OK) {
+                var tz = task.Result.Content.ReadAsStringAsync();
+                tz.Wait();
+                string res = tz.Result;
+                dynamic data = JObject.Parse(res);
+                if(data.code.ToString() != "Ok")
+                    throw new Exception("Произошла ошибка сервер вернул код "+ data.code.ToString());
+                List<RouteItem> routes = new List<RouteItem>();
+                foreach (var route in data.routes){
+                    routes.Add(new RouteItem(){
+                        DistMetr = (int)Math.Round(Utils.ParseDouble(route.distance.ToString())),
+                        DurationSec = (int)Math.Round(Utils.ParseDouble(route.duration.ToString())),
+                        Object = Utils.MapItemFromGeoJson(route.geometry.ToString()),
+                        DisplayName = "через "+route.legs[0].summary.ToString()
+                    });
+                }
+                return routes;
+            }
+            else
+                throw new Exception("Произошла ошибка при обращении к серверу!");
+        }
+
 
 
 
@@ -268,50 +318,6 @@ namespace OsmMapViewer{
 
 
 
-        public static List<MapPolygon> Test(MapPolygon area, int zoom, bool isCrop = true)
-        {
-
-            List<MapPolygon> list = new List<MapPolygon>();
-            var b = area.GetBounds();
-            var polygon = area.Points.Select(point => GetPixelFromCoord((GeoPoint) point,zoom)).ToArray();
-
-            var lt = GetTileFromCoord(new GeoPoint(b.Top, b.Left), zoom);
-            var rb = GetTileFromCoord(new GeoPoint(b.Bottom, b.Right), zoom, false);
-
-            int xCount = (int)Math.Abs(lt.X - rb.X);
-            int yCount = (int)Math.Abs(lt.Y - rb.Y);
-
-            int xStart = (int)Math.Min(lt.X, rb.X);
-            int yStart = (int)Math.Min(lt.Y, rb.Y);
-
-            List<Point> res = new List<Point>();
-
-            
-            for (int x = 0; x < xCount; x++)
-            for (int y = 0; y < yCount; y++){
-                if (isCrop){
-                    var bnd = GetCoordsBoundsFromTile(xStart + x, yStart + y, zoom);
-                    var t = new MapPolygon();
-                    t.Points.Add(new GeoPoint(bnd.Top,bnd.Left));
-                    t.Points.Add(new GeoPoint(bnd.Top,bnd.Right));
-                    t.Points.Add(new GeoPoint(bnd.Bottom, bnd.Right));
-                    t.Points.Add(new GeoPoint(bnd.Bottom,bnd.Left));
-                    Utils.ApplyStrokeStyle(t, Brushes.Blue);
-
-                    Rect boundPixels = new Rect((xStart + x) * 256, (yStart + y) * 256, 256, 256);
-
-                    if (polyRect(polygon, boundPixels.Left, boundPixels.Top, boundPixels.Width, boundPixels.Height))
-                        Utils.ApplyFillStyle(t, new SolidColorBrush(Color.FromArgb(80,0,255,0)));
-                    else
-                        Utils.ApplyFillStyle(t, new SolidColorBrush(Color.FromArgb(80,255,0,0)));
-                    Utils.ApplyBorderSize(t, 2);
-                    list.Add(t);
-                }
-                //res.Add(new Point(xStart + x, yStart + y));
-            }
-
-            return list;
-        }
         //Получить список тайлов для скачивания из зоны, isCrop = true, тайлы на пределами полигона будут пустые
         public static List<Point> GetAreaTileList(MapPolygon area,int zoom, bool isCrop = true){
             var b = area.GetBounds();
@@ -681,6 +687,14 @@ namespace OsmMapViewer{
             SetPropertyObject<Brush>(item, "Stroke", stroke);
             return item;
         }
+        public static MapItem ApplyStrokeSelectedStyle(MapItem item, Brush stroke){
+            SetPropertyObject<Brush>(item, "SelectedStroke", stroke);
+            return item;
+        }
+        public static MapItem ApplyStrokeHighlightStyle(MapItem item, Brush stroke){
+            SetPropertyObject<Brush>(item, "HighlightStroke", stroke);
+            return item;
+        }
         public static Brush GetFillStyle(MapItem item) {
             return GetPropertyObject<Brush>(item, "Fill");
         }
@@ -773,6 +787,22 @@ namespace OsmMapViewer{
         public static MapItem ApplyBorderSize(MapItem item, double size)
         {
             SetPropertyObject<StrokeStyle>(item, "StrokeStyle", new StrokeStyle()
+            {
+                Thickness = size
+            });
+            return item;
+        }
+        public static MapItem ApplyBorderSelectedSize(MapItem item, double size)
+        {
+            SetPropertyObject<StrokeStyle>(item, "SelectedStrokeStyle", new StrokeStyle()
+            {
+                Thickness = size
+            });
+            return item;
+        }
+        public static MapItem ApplyBorderHighlightSize(MapItem item, double size)
+        {
+            SetPropertyObject<StrokeStyle>(item, "HighlightStrokeStyle", new StrokeStyle()
             {
                 Thickness = size
             });
