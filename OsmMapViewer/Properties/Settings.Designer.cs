@@ -73,7 +73,7 @@ namespace OsmMapViewer.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("http://10.113.0.183/api/get_data.php")]
+        [global::System.Configuration.DefaultSettingValueAttribute("http://map.mchs.lnr/api/get_data.php")]
         public string GET_DATA {
             get {
                 return ((string)(this["GET_DATA"]));
@@ -85,7 +85,7 @@ namespace OsmMapViewer.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("http://10.113.0.183/nominatim/")]
+        [global::System.Configuration.DefaultSettingValueAttribute("http://map.mchs.lnr/nominatim/")]
         public string NOMINATIM_HOST {
             get {
                 return ((string)(this["NOMINATIM_HOST"]));
@@ -146,7 +146,7 @@ namespace OsmMapViewer.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("http://10.113.0.183/hot/{tileLevel}/{tileX}/{tileY}.png")]
+        [global::System.Configuration.DefaultSettingValueAttribute("http://map.mchs.lnr/hot/{tileLevel}/{tileX}/{tileY}.png")]
         public string TILE_SERVER_TEMPLATE {
             get {
                 return ((string)(this["TILE_SERVER_TEMPLATE"]));

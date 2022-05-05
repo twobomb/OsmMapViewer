@@ -8,7 +8,7 @@
     xmlns:svm="clr-namespace:OsmMapViewer.ViewModel"
     xmlns:models="clr-namespace:OsmMapViewer.Models"
     xmlns:dxg="http://schemas.devexpress.com/winfx/2008/xaml/grid"
-    x:Class="OsmMapViewer.Selector"
+    x:Class="OsmMapViewer.Dialogs.Selector"
     xmlns:local="clr-namespace:OsmMapViewer.Converter"
     Title="Меню выбора тегов" Height="659.96" Width="1207.646"
     >

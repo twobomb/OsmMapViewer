@@ -15,9 +15,9 @@ using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using DevExpress.Data.Mask;
 using DevExpress.Xpf.Core;
-using OsmMapViewer.Annotations;
 using OsmMapViewer.Misc;
 using OsmMapViewer.Models;
+using OsmMapViewer.Properties;
 
 
 namespace OsmMapViewer.Dialogs

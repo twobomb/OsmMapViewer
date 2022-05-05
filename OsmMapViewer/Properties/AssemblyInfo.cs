@@ -9,7 +9,7 @@ using System.Windows;
 [assembly: AssemblyTitle("OsmMapViewer")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
+[assembly: AssemblyCompany("МЧС ЛНР")]
 [assembly: AssemblyProduct("OsmMapViewer")]
 [assembly: AssemblyCopyright("Copyright ©  2022")]
 [assembly: AssemblyTrademark("")]
@@ -45,3 +45,4 @@ using System.Windows;
 // [assembly: AssemblyVersion("1.0.*")]
 [assembly: AssemblyVersion("1.0.0.0")]
 [assembly: AssemblyFileVersion("1.0.0.0")]
+[assembly: Guid("75648288-18fc-4360-ac51-c9f5a7c6ade7")]

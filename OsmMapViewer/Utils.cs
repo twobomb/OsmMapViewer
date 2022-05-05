@@ -26,7 +26,6 @@ using System.Xml;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using DevExpress.Map.Kml.Model;
-using DevExpress.Mvvm.POCO;
 using DevExpress.Xpf.Map.Native;
 using Point = System.Windows.Point;
 

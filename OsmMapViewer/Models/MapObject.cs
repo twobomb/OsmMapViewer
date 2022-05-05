@@ -10,7 +10,7 @@ using System.Windows.Media;
 using DevExpress.Map;
 using DevExpress.Map.Native;
 using DevExpress.Xpf.Map;
-using OsmMapViewer.Annotations;
+using OsmMapViewer.Properties;
 using GeoUtils = DevExpress.Map.Native.GeoUtils;
 
 namespace OsmMapViewer.Models {

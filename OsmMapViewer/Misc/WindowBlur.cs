@@ -4,7 +4,6 @@ using System.Windows;
 using System.Windows.Interop;
 using OsmMapViewer.Misc.Native;
 
-
 namespace OsmMapViewer.Misc
 {
     public class WindowBlur
