@@ -14,9 +14,7 @@ namespace OsmMapViewer.Models
         {
             get
             {
-                if (DistMetr < 1000)
-                    return DistMetr + " м";
-                return ((float) DistMetr / 1000).ToString("##.0") + " км";
+                return Utils.PrettyDistance(DistMetr);
             }
         }
 
@@ -35,6 +33,8 @@ namespace OsmMapViewer.Models
         }
 
         public MapItem Object{ get; set; }
+        public string LegsJson { get; set; }
+        public List<InstructionItem> Instructions{ get; set; }
 
         public int DistMetr = 0;
         public int DurationSec = 0;

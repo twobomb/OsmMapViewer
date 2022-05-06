@@ -333,6 +333,12 @@
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
                                     <Border BorderBrush="#FF0170BB" BorderThickness="0 0 0 1" Padding="0 0 0 15">
+                                        <Border.ContextMenu>
+                                            <ContextMenu Tag="{Binding Source={x:Reference MainWind},Path= DataContext}">
+                                                <MenuItem Header="Точка отправления" CommandParameter="{Binding}"  Command="{Binding Path=Tag.FromPointObject, RelativeSource={RelativeSource AncestorType=ContextMenu,Mode=FindAncestor}}"></MenuItem>
+                                                <MenuItem Header="Точка прибытия" CommandParameter="{Binding}"  Command="{Binding Path=Tag.ToPointObject, RelativeSource={RelativeSource AncestorType=ContextMenu,Mode=FindAncestor}}"></MenuItem>
+                                            </ContextMenu>
+                                        </Border.ContextMenu>
                                         <TextBlock HorizontalAlignment="Left" FontSize="13" Text="{Binding DisplayNameLabel}" TextWrapping="Wrap" Foreground="#FF0170BB" />
                                     </Border>
                                 </DataTemplate>
@@ -343,7 +349,7 @@
                 </dx:DXTabItem>
                 <dx:DXTabItem Header="Слои">
                     <Grid Background="Transparent" Margin="0" HorizontalAlignment="Stretch">
-                        <Grid x:Name="grid_detail_layer" Panel.ZIndex="55" >
+                        <Grid x:Name="grid_detail_layer" Panel.ZIndex="55" designTime:IsHidden="true">
                             <Grid.Style>
                                 <Style TargetType="{x:Type Grid}">
                                     <Style.Triggers>
@@ -374,6 +380,8 @@
                                                 <ContextMenu Tag="{Binding Source={x:Reference MainWind},Path= DataContext}">
                                                     <MenuItem Header="Переименовать" CommandParameter="{Binding}"  Command="{Binding Path=Tag.RenameObject, RelativeSource={RelativeSource AncestorType=ContextMenu,Mode=FindAncestor}}"></MenuItem>
                                                     <MenuItem Header="Удалить" CommandParameter="{Binding}"  Command="{Binding Path=Tag.DeleteObject, RelativeSource={RelativeSource AncestorType=ContextMenu,Mode=FindAncestor}}"></MenuItem>
+                                                    <MenuItem Header="Точка отправления" CommandParameter="{Binding}"  Command="{Binding Path=Tag.FromPointObject, RelativeSource={RelativeSource AncestorType=ContextMenu,Mode=FindAncestor}}"></MenuItem>
+                                                    <MenuItem Header="Точка прибытия" CommandParameter="{Binding}"  Command="{Binding Path=Tag.ToPointObject, RelativeSource={RelativeSource AncestorType=ContextMenu,Mode=FindAncestor}}"></MenuItem>
                                                     <MenuItem Header="Дополнительно">
                                                         <MenuItem.Items>
                                                             <MenuItem Header="Выделить полигон как зону поиска" CommandParameter="{Binding}"  Command="{Binding Path=Tag.SelectPolyAsZone, RelativeSource={RelativeSource AncestorType=ContextMenu,Mode=FindAncestor}}"></MenuItem>
@@ -600,6 +608,8 @@
                     <Grid Background="Transparent">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"></RowDefinition>
+                            <RowDefinition Height="Auto"></RowDefinition>
+                            <RowDefinition Height="Auto"></RowDefinition>
                             <RowDefinition Height="*"></RowDefinition>
                         </Grid.RowDefinitions>
                         <StackPanel>
@@ -617,7 +627,7 @@
                                         </Canvas>
                                     </Viewbox>
                                 </Border>
-                                <dxe:TextEdit EditValue="{Binding RouteFromInput}" FontSize="14" Grid.Column="1"  NullText="Укажите пункт отправления" Margin="3"/>
+                                <dxe:TextEdit x:Name="tb_fromInput" EditValue="{Binding RouteFromInput, UpdateSourceTrigger=PropertyChanged}" FontSize="14" Grid.Column="1"  NullText="Укажите пункт отправления" Margin="3"/>
                                 <dx:SimpleButton  Grid.Column="2" Command="{Binding FindFromRoute}" GlyphHeight="24" GlyphAlignment="Left" Glyph="{dx:DXImage SvgImages/HybridDemoIcons/Editors/HybridDemo_Search Button.svg}"/>
                                 <dx:SimpleButton ToolTip="Указать точку на карте" Grid.Column="3" IsChecked="{Binding IsSetModeFromRoute}" GlyphHeight="24" GlyphAlignment="Left" Glyph="{dx:DXImage SvgImages/Icon Builder/Business_Target.svg}" ButtonKind="Toggle"/>
                             </Grid>
@@ -635,13 +645,32 @@
                                         </Canvas>
                                     </Viewbox>
                                 </Border>
-                                <dxe:TextEdit FontSize="14" Grid.Column="1" EditValue="{Binding RouteToInput}" NullText="Укажите пункт прибытия"  Margin="3"/>
+                                <dxe:TextEdit  x:Name="tb_toInput" FontSize="14" Grid.Column="1" EditValue="{Binding RouteToInput, UpdateSourceTrigger=PropertyChanged}" NullText="Укажите пункт прибытия"  Margin="3"/>
                                 <dx:SimpleButton Grid.Column="2" Command="{Binding FindToRoute}" GlyphHeight="24" GlyphAlignment="Left" Glyph="{dx:DXImage SvgImages/HybridDemoIcons/Editors/HybridDemo_Search Button.svg}"/>
                                 <dx:SimpleButton IsChecked="{Binding IsSetModeToRoute}" ToolTip="Указать точку на карте" Grid.Column="3"  GlyphHeight="24" GlyphAlignment="Left" Glyph="{dx:DXImage SvgImages/Icon Builder/Business_Target.svg}" ButtonKind="Toggle"/>
+
                             </Grid>
+                            <dxe:HyperlinkEdit Command="{Binding ClearRouteList}" Text="Очистить список маршрутов" Grid.Row="1" HorizontalAlignment="Right" >
+                                <dxe:HyperlinkEdit.Style>
+                                    <Style TargetType="{x:Type dxe:HyperlinkEdit}">
+                                        <Style.Triggers>
+                                            <MultiDataTrigger >
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Value="{x:Null}" Binding="{Binding RouteToPoint}" ></Condition>
+                                                    <Condition Value="{x:Null}" Binding="{Binding RouteFromPoint}" ></Condition>
+                                                </MultiDataTrigger.Conditions>
+                                                <MultiDataTrigger.Setters>
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                </MultiDataTrigger.Setters>
+                                            </MultiDataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </dxe:HyperlinkEdit.Style>
+
+                            </dxe:HyperlinkEdit>
                         </StackPanel>
 
-                        <ListBox Grid.Row="1" SelectedItem="{Binding RouteSelect}"  ItemsSource="{Binding Routes}" Padding="0"  HorizontalAlignment="Stretch"  ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox x:Name="lb_routes" MaxHeight="250" Grid.Row="1" SelectedItem="{Binding RouteSelect}"  ItemsSource="{Binding Routes}" Padding="0"  HorizontalAlignment="Stretch"  ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                             <ListBox.ItemContainerStyle>
                                 <Style TargetType="{x:Type ListBoxItem}">
                                     <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
@@ -684,6 +713,97 @@
                                             <TextBlock FontSize="14" FontWeight="Bold" Margin="5 0 5 0" Grid.Column="1" Grid.RowSpan="2" TextWrapping="Wrap" Text="{Binding DisplayName}"></TextBlock>
                                             <TextBlock Grid.Column="2" Text="{Binding DisplayDuration}"  TextAlignment="Right" FontSize="13"></TextBlock>
                                             <TextBlock Grid.Column="2" Grid.Row="1" Text="{Binding DisplayDist}" TextAlignment="Right" FontSize="14" FontWeight="Bold"></TextBlock>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox >
+
+                        <Border Grid.Row="2" Margin="5">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding RouteSelect}" Value="{x:Null}">
+                                            <Setter Property="Visibility" Value="Collapsed"></Setter>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"></ColumnDefinition>
+                                    <ColumnDefinition Width="Auto"></ColumnDefinition>
+                                    <ColumnDefinition Width="Auto"></ColumnDefinition>
+                                    <ColumnDefinition Width="*"></ColumnDefinition>
+                                    <ColumnDefinition Width="Auto"></ColumnDefinition>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock FontSize="20" Margin="0 0 20 0" FontWeight="Bold" Text="Маршрут"></TextBlock>
+                                <TextBlock FontSize="16"  Background="#FFD6D6D6" Padding="3" VerticalAlignment="Center" Grid.Column="1" Margin="0 0 20 0" Text="{Binding RouteSelect.DisplayDist}"></TextBlock>
+                                <TextBlock FontSize="16"  Background="#FFD6D6D6" Padding="3" VerticalAlignment="Center" Grid.Column="2" Text="{Binding RouteSelect.DisplayDuration}"></TextBlock>
+                                <Button CommandParameter="{Binding RouteSelect}" Command="{Binding ReportRoute}" Grid.Column="4" Height="30" Background="Transparent" BorderBrush="Transparent" Cursor="Hand"  ToolTip="Создать отчёт маршрута">
+                                    <Button.Style>
+                                        <Style TargetType="{x:Type Button}">
+                                            <Setter Property="ContentTemplate" >
+                                                <Setter.Value>
+                                                    <DataTemplate>
+                                                        <Image Source="{dx:DXImage 'SvgImages/Icon Builder/Business_Report.svg'}" Stretch="UniformToFill"/>
+                                                    </DataTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                            </Grid>
+                        </Border>
+                        <ListBox  Margin="0 0 0 0" Grid.Row="3" SelectedItem="{Binding InstructionSelect}"  ItemsSource="{Binding RouteSelect.Instructions}" Padding="0"  HorizontalAlignment="Stretch"  ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                            <ListBox.Style>
+                                <Style TargetType="ListBox">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding RouteSelect}" Value="{x:Null}">
+                                            <Setter Property="Visibility" Value="Collapsed"></Setter>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ListBox.Style>
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="{x:Type ListBoxItem}">
+                                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                </Style>
+                            </ListBox.ItemContainerStyle>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Padding="5 5">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Style.Setters>
+                                                    <Setter Property="Background" Value="#FFECECEC"></Setter>
+                                                </Style.Setters>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType={x:Type ListBoxItem},Mode=FindAncestor},Path=IsSelected}" Value="True">
+                                                        <DataTrigger.Setters>
+                                                            <Setter Property="Background" Value="#FFe6ff8a"></Setter>
+                                                        </DataTrigger.Setters>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <Grid >
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"></ColumnDefinition>
+                                                <ColumnDefinition Width="Auto"></ColumnDefinition>
+                                                <ColumnDefinition Width="*"></ColumnDefinition>
+                                                <ColumnDefinition Width="Auto"></ColumnDefinition>
+                                            </Grid.ColumnDefinitions>
+                                            <Border Grid.RowSpan="2">
+                                                <Viewbox Width="18" Height="18">
+                                                    <Canvas Width="24" Height="24">
+                                                        <Path Fill="#FF7E7E7E" Data="M12 2A7 7 0 0 0 5 9C5 14.25 12 22 12 22S19 14.25 19 9A7 7 0 0 0 12 2M7.5 10H10V5H14V10H16.5L12 14.5Z" />
+                                                    </Canvas>
+                                                </Viewbox>
+                                            </Border>
+                                            <TextBlock FontSize="16" VerticalAlignment="Center" FontWeight="Bold" Margin="5 0 5 0" Grid.Column="1"  Text="{Binding Index}"></TextBlock>
+                                            <TextBlock Grid.Column="2" VerticalAlignment="Center"  Text="{Binding DisplayName}" TextWrapping="Wrap"  TextAlignment="Left" FontSize="13" ></TextBlock>
+                                            <TextBlock Grid.Column="3" VerticalAlignment="Center" FontWeight="Bold" Text="{Binding DisplayDist}" TextAlignment="Right" FontSize="14" ></TextBlock>
                                         </Grid>
                                     </Border>
                                 </DataTemplate>

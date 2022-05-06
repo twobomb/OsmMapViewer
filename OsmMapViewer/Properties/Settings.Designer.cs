@@ -158,6 +158,18 @@ namespace OsmMapViewer.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("Win10Light")]
+        public string theme {
+            get {
+                return ((string)(this["theme"]));
+            }
+            set {
+                this["theme"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("reverse.php")]
         public string NOMINATIM_REVERSE {
             get {
@@ -177,6 +189,18 @@ namespace OsmMapViewer.Properties {
             }
             set {
                 this["OSRM_HOST"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("http://map.mchs.lnr:8080/")]
+        public string INSTUCTIONS_SERVER {
+            get {
+                return ((string)(this["INSTUCTIONS_SERVER"]));
+            }
+            set {
+                this["INSTUCTIONS_SERVER"] = value;
             }
         }
     }

@@ -82,10 +82,9 @@
                     </StackPanel>
                 </Grid>
             </GroupBox>
-            <GroupBox Header="Сервер построения маршрутов">
+            <GroupBox Header="Построение маршрутов">
                 <Grid>
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"></RowDefinition>
                         <RowDefinition Height="Auto"></RowDefinition>
                         <RowDefinition Height="Auto"></RowDefinition>
                         <RowDefinition Height="Auto"></RowDefinition>
@@ -94,8 +93,10 @@
                         <ColumnDefinition Width="Auto"></ColumnDefinition>
                         <ColumnDefinition Width="Auto"></ColumnDefinition>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="Хост"></TextBlock>
+                    <TextBlock Text="Хост OSRM"></TextBlock>
                     <TextBox MinWidth="400" Grid.Column="1" Margin="20 0 0 10"  x:Name="tb_route_host"></TextBox>
+                    <TextBlock Grid.Row="1" Text="Сервер инструкций"></TextBlock>
+                    <TextBox Grid.Row="1" MinWidth="400" Grid.Column="1" Margin="20 0 0 10"  x:Name="tb_instuction_server"></TextBox>
                     <StackPanel Grid.Row="3" Orientation="Horizontal" Grid.ColumnSpan="2">
                         <dx:SimpleButton Margin="0 0 10 0" Height="25" Background="Transparent" BorderBrush="Transparent" Cursor="Hand" Content="Сбросить по умолчанию" Glyph="{dx:DXImage SvgImages/Dashboards/ResetLayoutOptions.svg}" Click="SimpleButton_Click_9" />
                         <dx:SimpleButton  Height="25" Background="Transparent" BorderBrush="Transparent" Cursor="Hand" Content="Сохранить" Glyph="{dx:DXImage SvgImages/XAF/Action_SaveScript.svg}" Click="SimpleButton_Click_8" />

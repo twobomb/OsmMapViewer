@@ -78,7 +78,79 @@ namespace OsmMapViewer{
             else
                 throw new Exception("Произошла ошибка при обращении к серверу!");
         }
-        public static List<RouteItem> GetRoutes(GeoPoint p1,GeoPoint p2) {
+        
+        public static List<InstructionItem> GetInstuctions(string legsJson) {
+            List<string> list = null;
+            try {
+                list = GetInstuctionsText(legsJson);
+            }
+            catch (Exception e) {
+                Utils.pushCrashLog(e);
+                list = new List<string>();
+            }
+
+            dynamic data=  JArray.Parse(legsJson);
+            List<InstructionItem> result = new List<InstructionItem>();
+            int inx = 1;
+            foreach (var leg in data){
+                foreach (var step in leg.steps)
+                {
+                    string name = "Движение по "+step.name;
+                    if (list.Count >= result.Count + 1)
+                        name = list[result.Count];
+                    result.Add(new InstructionItem() {
+                        DisplayName = name,
+                        DisplayDist = Utils.PrettyDistance((int)Math.Round(ParseDouble(step.distance.ToString()))),
+                        Index = inx++,
+                        Geometry = Utils.MapItemFromGeoJson(step.geometry.ToString())
+                    });
+                }
+            }
+
+            return result;
+        }
+        public static List<string> GetInstuctionsText(string legsJson) {
+                var requestMessage = new HttpRequestMessage(HttpMethod.Post, Config.INSTUCTIONS_SERVER);
+                requestMessage.Content = new StringContent(legsJson, Encoding.UTF8)
+                {
+                    Headers =
+                    {
+                        ContentType = new MediaTypeWithQualityHeaderValue("application/json")
+                    }
+                };
+                var task = httpClient.SendAsync(requestMessage);
+                task.Wait(20000);
+                var tz = task.Result.Content.ReadAsStringAsync();
+                tz.Wait();
+                string res = tz.Result;
+                if (task.Status != TaskStatus.RanToCompletion || task.Result.StatusCode != HttpStatusCode.OK)
+                    throw new Exception("Произошла ошибка на сервере инструкций");
+
+                dynamic data = JArray.Parse(res);
+                List<string> result = new List<string>();
+                foreach (var re in data)
+                    result.Add(re.ToString());
+                return result;
+                
+
+        }
+        public static MapObject FindAddr(string text) {
+                var requestMessage = new HttpRequestMessage(HttpMethod.Get, String.Format("{0}{1}?q={2}&format=json&limit=1&accept-language=ru", Config.NOMINATIM_HOST, Config.NOMINATIM_SEARCH, text));
+                requestMessage.Headers.Add("user-agent", "OsmMapViewer");
+            var task = httpClient.SendAsync(requestMessage);
+                task.Wait(20000);
+                var tz = task.Result.Content.ReadAsStringAsync();
+                tz.Wait();
+                string res = tz.Result;
+                if (task.Status != TaskStatus.RanToCompletion || task.Result.StatusCode != HttpStatusCode.OK)
+                    throw new Exception("Произошла ошибка при поиске адреса");
+
+                var obj = Utils.ParseObjects(res);
+                if(obj.Count ==0)
+                    throw new Exception("Ничего не найдено!");
+             return obj[0];
+        }
+            public static List<RouteItem> GetRoutes(GeoPoint p1,GeoPoint p2) {
             var requestMessage = new HttpRequestMessage(HttpMethod.Get, $@"{Config.OSRM_HOST}v1/driving/{p1.Longitude.ToString().Replace(",",".")},{p1.Latitude.ToString().Replace(",", ".")};{p2.Longitude.ToString().Replace(",", ".")},{p2.Latitude.ToString().Replace(",", ".")}?alternatives=true&steps=true&geometries=geojson&overview=full&annotations=true");
             requestMessage.Headers.Add("user-agent","OsmMapViewer");
             requestMessage.Headers.Add("user-agent", "OsmMapViewer");
@@ -93,12 +165,13 @@ namespace OsmMapViewer{
                 if(data.code.ToString() != "Ok")
                     throw new Exception("Произошла ошибка сервер вернул код "+ data.code.ToString());
                 List<RouteItem> routes = new List<RouteItem>();
-                foreach (var route in data.routes){
+                foreach (var route in data.routes) {
                     routes.Add(new RouteItem(){
                         DistMetr = (int)Math.Round(Utils.ParseDouble(route.distance.ToString())),
                         DurationSec = (int)Math.Round(Utils.ParseDouble(route.duration.ToString())),
                         Object = Utils.MapItemFromGeoJson(route.geometry.ToString()),
-                        DisplayName = "через "+route.legs[0].summary.ToString()
+                        DisplayName = "через "+route.legs[0].summary.ToString(),
+                        Instructions = Utils.GetInstuctions(route.legs.ToString())
                     });
                 }
                 return routes;
@@ -1032,95 +1105,10 @@ namespace OsmMapViewer{
             s = s.Replace(",", ".");
             return double.Parse(s, CultureInfo.InvariantCulture);
         }
-        /*
-        public static GMapRoute StringLineToRoute(string s, string routeName)
-        {
-            if (s.ToLower().IndexOf("linestring") != 0)
-                throw new Exception("Ожидается LINESTRING!");
-            s = Regex.Match(s, @"\d[^()]+").Value;
-            var route = new GMapRoute(s.Split(new char[] { ',' }).Select(s1 =>
-                  new PointLatLng(double.Parse(s1.Split(new char[] { ' ' })[1], CultureInfo.InvariantCulture),
-                      double.Parse(s1.Split(new char[] { ' ' })[0], CultureInfo.InvariantCulture))), routeName);
-            route.Stroke = Pens.Red;
-            return route;
+        public static string PrettyDistance(int DistMetr) {
+            if (DistMetr < 1000)
+                return DistMetr + " м";
+            return ((float)DistMetr / 1000).ToString("##.0") + " км";
         }
-        public static GMapPolygon StringPolygonToPolygon(string s, string polygonName)
-        {
-            if (s.ToLower().IndexOf("polygon") != 0)
-                throw new Exception("Ожидается POLYGON!");
-            s = Regex.Match(s, @"\d[^()]+").Value;
-
-            var poly = new GMapPolygon(s.Split(new char[] { ',' }).Select(s1 =>
-                new PointLatLng(double.Parse(s1.Split(new char[] { ' ' })[1], CultureInfo.InvariantCulture),
-                    double.Parse(s1.Split(new char[] { ' ' })[0], CultureInfo.InvariantCulture))).ToList(), polygonName);
-
-            poly.Stroke = Pens.Red;
-            poly.Fill = new SolidBrush(Color.FromArgb(70, 255, 0, 0));
-            return poly;
-        }
-
-        public static List<string> SelectAround(string tbl, PointLatLng point, int radiusMetr)
-        {
-            List<string> o = new List<string>();
-            string sql = String.Format(
-                "SELECT \"name\",\"addr:housenumber\" FROM planet_osm_{0} WHERE ST_Contains(ST_Buffer(ST_GeomFromText('POINT({1} {2})', 4326)::geography, {3})::geometry, ST_Centroid(ST_Transform(way, 4326)))",
-                tbl, point.Lng.ToString(CultureInfo.InvariantCulture), point.Lat.ToString(CultureInfo.InvariantCulture), radiusMetr);
-            using (var con = DBController.GetConnection())
-            {
-                con.Open();
-                var cmd = new NpgsqlCommand(sql, con);
-                var reader = cmd.ExecuteReader();
-                while (reader.Read())
-                    o.Add(reader["name"].ToString() + " " + reader["addr:housenumber"].ToString());
-                reader.Close();
-            }
-
-            return o;
-
-        }
-        public static GMarkerGoogle StringPointToMarker(string s, GMarkerGoogleType type)
-        {
-            if (s.ToLower().IndexOf("point") != 0)
-                throw new Exception("Ожидается POINT!");
-            s = Regex.Match(s, @"\d[^()]+").Value;
-
-            return new GMarkerGoogle(
-                new PointLatLng(double.Parse(s.Split(new char[] { ' ' })[1], CultureInfo.InvariantCulture),
-                    double.Parse(s.Split(new char[] { ' ' })[0], CultureInfo.InvariantCulture)), type);
-        }
-        public static PointLatLng[] FromText(string txt)
-        {
-            return txt.Split(new char[] { ',' }).Select(s =>
-            {
-                var m = s.Trim().Split(new char[] { ' ' });
-                return new PointLatLng(double.Parse(m[1], CultureInfo.InvariantCulture),
-                    double.Parse(m[0], CultureInfo.InvariantCulture));
-
-            }).ToArray();
-        }
-        /**
-       * FindPointAtDistanceFrom находит и возвращает координаты точки которые находятся в {distanceKilometres} км от точки {startPoint} под углом {initialBearingRadians}
-       *Угол верх 0 и по часовой
-       */
-        /*
-        public static GMap.NET.PointLatLng FindPointAtDistanceFrom(GMap.NET.PointLatLng startPoint, double initialBearingRadians, double distanceKilometres)
-        {
-
-            const double radiusEarthKilometres = 6378;
-            var distRatio = distanceKilometres / radiusEarthKilometres;
-            var distRatioSine = Math.Sin(distRatio);
-            var distRatioCosine = Math.Cos(distRatio);
-            var startLatRad = MercatorProjection.DegreesToRadians(startPoint.Lat);
-            var startLonRad = MercatorProjection.DegreesToRadians(startPoint.Lng);
-            var startLatCos = Math.Cos(startLatRad);
-            var startLatSin = Math.Sin(startLatRad);
-
-            var endLatRads = Math.Asin((startLatSin * distRatioCosine) + (startLatCos * distRatioSine * Math.Cos(initialBearingRadians)));
-            var endLonRads = startLonRad + Math.Atan2(
-                Math.Sin(initialBearingRadians) * distRatioSine * startLatCos,
-                distRatioCosine - startLatSin * Math.Sin(endLatRads));
-
-            return new GMap.NET.PointLatLng(MercatorProjection.RadiansToDegrees(endLatRads), MercatorProjection.RadiansToDegrees(endLonRads));
-        }*/
     }
 }

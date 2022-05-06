@@ -73,6 +73,7 @@ namespace OsmMapViewer.Dialogs
             tb_tile_pattern.Text = Settings.Default.TILE_SERVER_TEMPLATE;
             //4
             tb_route_host.Text = Settings.Default.OSRM_HOST;
+            tb_instuction_server.Text = Settings.Default.INSTUCTIONS_SERVER;
 
             //5
 
@@ -146,6 +147,7 @@ namespace OsmMapViewer.Dialogs
         private void SimpleButton_Click_8(object sender, RoutedEventArgs e)
         {
             Settings.Default.OSRM_HOST = tb_route_host.Text.Trim();
+            Settings.Default.INSTUCTIONS_SERVER = tb_instuction_server.Text.Trim();
             Settings.Default.Save();
             IsHaveChanges = true;
 
@@ -154,6 +156,7 @@ namespace OsmMapViewer.Dialogs
         private void SimpleButton_Click_9(object sender, RoutedEventArgs e)
         {
             Settings.Default.OSRM_HOST = Settings.Default.Properties["OSRM_HOST"].DefaultValue.ToString();
+            Settings.Default.INSTUCTIONS_SERVER = Settings.Default.Properties["INSTUCTIONS_SERVER"].DefaultValue.ToString();
             Settings.Default.Save();
             IsHaveChanges = true;
             UpdateData();

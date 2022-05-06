@@ -50,11 +50,7 @@ using Timer = System.Timers.Timer;
 
 namespace OsmMapViewer.ViewModel
 {
-    public class MainWindowViewModel: ViewModelBase
-    {
-
-
-        
+    public class MainWindowViewModel: ViewModelBase {
         public List<string> MapProviders { get; set; } = new List<string>()
         {
             "Локальная OSM(без интернета)",
@@ -99,11 +95,43 @@ namespace OsmMapViewer.ViewModel
 
         #region  Маршруты RT
 
-        public GeoPoint RouteFromPoint { get; set; } 
-        public GeoPoint RouteToPoint { get; set; } 
+        public GeoPoint _RouteFromPoint = null;
+        public GeoPoint RouteFromPoint { get=>_RouteFromPoint; set=>SetProperty(ref _RouteFromPoint,value); } 
+        public GeoPoint _RouteToPoint = null;
+        public GeoPoint RouteToPoint { get=> _RouteToPoint; set=>SetProperty(ref _RouteToPoint, value); } 
         public string RouteFromInput { get; set; } = "";
         public string RouteToInput { get; set; } = "";
         public ObservableCollection<RouteItem> Routes { get; set; } = new ObservableCollection<RouteItem>();
+        
+        public InstructionItem _InstructionSelect = null;
+        public InstructionItem InstructionSelect
+        {
+            get => _InstructionSelect;
+            set
+            {
+                if (_InstructionSelect != null)
+                    (RouteLayerVector.Data as MapItemStorage).Items.Remove(_InstructionSelect.Geometry);
+                SetProperty(ref _InstructionSelect, value);
+
+                if (_InstructionSelect != null) {
+                    Utils.ApplyStrokeStyle(_InstructionSelect.Geometry, new SolidColorBrush(Color.FromArgb(255, 21, 191, 75)));
+                    Utils.ApplyBorderSize(_InstructionSelect.Geometry, 10);
+                    (RouteLayerVector.Data as MapItemStorage).Items.Add(_InstructionSelect.Geometry);
+                    _InstructionSelect.Geometry.EnableSelection = false;
+                    _InstructionSelect.Geometry.EnableHighlighting = false;
+                    if (_InstructionSelect.Geometry is MapPolyline mp)
+                    {
+                        Window.mapControl.ZoomToRegion(mp.GetBounds(), .5f);
+                        Window.mapControl.CenterPoint = mp.GetCenter();
+                    }
+                    if (_InstructionSelect.Geometry is MapLine ml)
+                    {
+                        Window.mapControl.ZoomToRegion(ml.GetBounds(),.5f);
+                        Window.mapControl.CenterPoint = ml.GetCenter();
+                    }
+                }
+            }
+        }
         public RouteItem _RouteSelect = null;
         public RouteItem RouteSelect
         {
@@ -196,7 +224,22 @@ namespace OsmMapViewer.ViewModel
             get {
                 return findFromRoute ??
                        (findFromRoute = new RelayCommand(obj => {
-                           
+                           try
+                           {
+                               var m = Utils.FindAddr(RouteFromInput);
+                               RouteFromPoint = m.CenterPoint;
+                               RouteFromInput = m.DisplayName;
+                               OnPropertyChanged("RouteFromInput");
+                               UpdateRoutes();
+                               Window.mapControl.Zoom(16);
+                               Window.mapControl.CenterPoint = m.CenterPoint;
+
+
+                           }
+                           catch (Exception e)
+                           {
+                               MsgPrinterVM.Error(e.Message);
+                           }
                        }));
             }
         }
@@ -205,7 +248,55 @@ namespace OsmMapViewer.ViewModel
             get {
                 return findToRoute ??
                        (findToRoute = new RelayCommand(obj => {
-                           
+                           try
+                           {
+                               var m = Utils.FindAddr(RouteToInput);
+                               RouteToPoint= m.CenterPoint;
+                               RouteToInput= m.DisplayName;
+                               OnPropertyChanged("RouteToInput");
+                               UpdateRoutes();
+                               Window.mapControl.Zoom(16);
+                               Window.mapControl.CenterPoint = m.CenterPoint;
+                           }
+                           catch (Exception e)
+                           {
+                               MsgPrinterVM.Error(e.Message);
+                           }
+
+                       }));
+            }
+        }
+
+        private RelayCommand reportRoute;
+        public RelayCommand ReportRoute {
+            get {
+                return reportRoute ??
+                       (reportRoute = new RelayCommand(obj => {
+                           if (obj is RouteItem ri)
+                           {
+                               ReportRoute rl = new ReportRoute();
+                               (rl.FindControl("lbl_dist", true) as XRLabel).Text += ri.DisplayDist;
+                               (rl.FindControl("lbl_time", true) as XRLabel).Text += ri.DisplayDuration;
+                               rl.DataSource = ri.Instructions;
+                               PrintHelper.ShowRibbonPrintPreviewDialog(Window, rl);
+                           }
+                       }));
+            }
+        }
+        private RelayCommand clearRouteList;
+        public RelayCommand ClearRouteList
+        {
+            get {
+                return clearRouteList ??
+                       (clearRouteList = new RelayCommand(obj => {
+                           Routes.Clear();
+                           RouteFromInput = "";
+                           OnPropertyChanged("RouteFromInput");
+                           RouteToInput= "";
+                           OnPropertyChanged("RouteToInput");
+                           RouteFromPoint = null;
+                           RouteToPoint = null;
+                           UpdateRoutesVisual();
                        }));
             }
         }
@@ -1011,7 +1102,6 @@ public Decimal SizeBorderDrawing {
             Window.mapControl.EnableRotation = CanRotateMap;
 
             MapProviderSelected = MapProviders[0];
-
             Routes.CollectionChanged += (sender, args) =>
             {
                 switch (args.Action){
@@ -1030,7 +1120,6 @@ public Decimal SizeBorderDrawing {
                         break;
                 }
             };
-
             RulerList.CollectionChanged += (sender, args) =>{
                 (ServiceLayerVector.Data as MapItemStorage).Items.Clear();
                 MapPolyline mp = new MapPolyline()
@@ -1113,6 +1202,31 @@ public Decimal SizeBorderDrawing {
                 IsSelectDrawing = true;
                 OnPropertyChanged("IsSelectDrawing");
                 
+            };
+
+            Window.lb_routes.PreviewMouseLeftButtonUp += (sender, args) =>
+            {
+                if (RouteSelect != null)
+                {
+                    if (RouteSelect.Object is MapPolyline mp)
+                    {
+                        Window.mapControl.ZoomToRegion(mp.GetBounds(), 0.3);
+                        Window.mapControl.CenterPoint = mp.GetCenter();
+                    }
+                    if (RouteSelect.Object is MapLine ml)
+                    {
+                        Window.mapControl.ZoomToRegion(ml.GetBounds(), 0.3);
+                        Window.mapControl.CenterPoint = ml.GetCenter();
+                    }
+                }
+            };
+            Window.tb_fromInput.PreviewKeyUp += (sender, args) =>{
+                if (args.Key == Key.Enter)
+                    FindFromRoute.Execute(null);
+            };
+            Window.tb_toInput.PreviewKeyUp += (sender, args) =>{
+                if (args.Key == Key.Enter)
+                    FindToRoute.Execute(null);
             };
             //M1
             Window.mapControl.PreviewMouseDown += (s, e) => {
@@ -1870,6 +1984,43 @@ public void SearchObjects(string json){
                                prompt.Owner = Window;
                                if (prompt.ShowDialog().GetValueOrDefault(false))
                                    o.DisplayName = prompt.Text;
+                           }
+                           
+                       }));
+            }
+        }
+        private RelayCommand fromPointObject;
+        public RelayCommand FromPointObject
+        {
+            get
+            {
+                return fromPointObject ??
+                       (fromPointObject = new RelayCommand(obj =>{
+                           if (obj is MapObject o){
+                               RouteFromPoint = o.CenterPoint;
+                               RouteFromInput = o.DisplayName;
+                               OnPropertyChanged("RouteFromInput");
+                               UpdateRoutes();
+                               Window.mapControl.Zoom(16);
+                               Window.mapControl.CenterPoint = o.CenterPoint;
+                           }
+                           
+                       }));
+            }
+        }
+        private RelayCommand toPointObject;
+        public RelayCommand ToPointObject {
+            get
+            {
+                return toPointObject ??
+                       (toPointObject = new RelayCommand(obj =>{
+                           if (obj is MapObject o){
+                               RouteToPoint = o.CenterPoint;
+                               RouteToInput = o.DisplayName;
+                               OnPropertyChanged("RouteToInput");
+                               UpdateRoutes();
+                               Window.mapControl.Zoom(16);
+                               Window.mapControl.CenterPoint = o.CenterPoint;
                            }
                            
                        }));

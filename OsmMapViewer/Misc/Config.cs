@@ -18,6 +18,7 @@ namespace OsmMapViewer.Misc
             NOMINATIM_SEARCH = Settings.Default.NOMINATIM_SEARCH;
             NOMINATIM_LOOKUP = Settings.Default.NOMINATIM_LOOKUP;
             NOMINATIM_REVERSE= Settings.Default.NOMINATIM_REVERSE;
+            INSTUCTIONS_SERVER = Settings.Default.INSTUCTIONS_SERVER;
             OSRM_HOST= Settings.Default.OSRM_HOST;
             API_OSM = Settings.Default.API_OSM;
             BingKey = Settings.Default.BingKey;
@@ -41,6 +42,8 @@ namespace OsmMapViewer.Misc
         public static string NOMINATIM_SEARCH = "search.php";
         public static string NOMINATIM_LOOKUP = "lookup.php";
         public static string NOMINATIM_REVERSE = "reverse.php";
+
+        public static string INSTUCTIONS_SERVER = "http://localhost:8080";
 
         public static string API_OSM = "https://api.openstreetmap.org/"; //production
         //public const string API_OSM = "https://master.apis.dev.openstreetmap.org/"; //test

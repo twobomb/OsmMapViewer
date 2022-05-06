@@ -44,5 +44,8 @@
     <Setting Name="OSRM_HOST" Type="System.String" Scope="User">
       <Value Profile="(Default)">http://map.mchs.lnr:5000/</Value>
     </Setting>
+    <Setting Name="INSTUCTIONS_SERVER" Type="System.String" Scope="User">
+      <Value Profile="(Default)">http://map.mchs.lnr:8080/</Value>
+    </Setting>
   </Settings>
 </SettingsFile>
