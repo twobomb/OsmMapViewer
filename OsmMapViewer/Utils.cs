@@ -151,16 +151,15 @@ namespace OsmMapViewer{
              return obj[0];
         }
             public static List<RouteItem> GetRoutes(GeoPoint p1,GeoPoint p2) {
-            var requestMessage = new HttpRequestMessage(HttpMethod.Get, $@"{Config.OSRM_HOST}v1/driving/{p1.Longitude.ToString().Replace(",",".")},{p1.Latitude.ToString().Replace(",", ".")};{p2.Longitude.ToString().Replace(",", ".")},{p2.Latitude.ToString().Replace(",", ".")}?alternatives=true&steps=true&geometries=geojson&overview=full&annotations=true");
-            requestMessage.Headers.Add("user-agent","OsmMapViewer");
+            var requestMessage = new HttpRequestMessage(HttpMethod.Get, $@"{Config.OSRM_HOST}route/v1/driving/{p1.Longitude.ToString().Replace(",",".")},{p1.Latitude.ToString().Replace(",", ".")};{p2.Longitude.ToString().Replace(",", ".")},{p2.Latitude.ToString().Replace(",", ".")}?alternatives=true&steps=true&geometries=geojson&overview=full&annotations=true");
             requestMessage.Headers.Add("user-agent", "OsmMapViewer");
             requestMessage.Headers.Referrer = new Uri("https://www.openstreetmap.org/");
             var task = httpClient.SendAsync(requestMessage);
             task.Wait(20000);
+            var tz = task.Result.Content.ReadAsStringAsync();
+            tz.Wait();
+            string res = tz.Result;
             if (task.Status == TaskStatus.RanToCompletion && task.Result.StatusCode == HttpStatusCode.OK) {
-                var tz = task.Result.Content.ReadAsStringAsync();
-                tz.Wait();
-                string res = tz.Result;
                 dynamic data = JObject.Parse(res);
                 if(data.code.ToString() != "Ok")
                     throw new Exception("Произошла ошибка сервер вернул код "+ data.code.ToString());
@@ -177,7 +176,7 @@ namespace OsmMapViewer{
                 return routes;
             }
             else
-                throw new Exception("Произошла ошибка при обращении к серверу!");
+                throw new Exception("Произошла ошибка при обращении к серверу!\r\n"+res);
         }
 
 
@@ -341,7 +340,7 @@ namespace OsmMapViewer{
                 try{
                     CloseChangesetOsm(changeset, Config.login_osm, Config.pwd_osm);
                 }
-                catch (Exception e){}
+                catch (Exception){}
 
                 return true;
             }
@@ -381,7 +380,7 @@ namespace OsmMapViewer{
             try{
                 CloseChangesetOsm(changeset, Config.login_osm, Config.pwd_osm);
             }
-            catch (Exception e){}
+            catch (Exception){}
 
             return true;
         }
@@ -583,7 +582,6 @@ namespace OsmMapViewer{
                     }
 
                     return String.Format("POLYGON(({0}))",string.Join(",", list.Select(point => point.GetX().ToString().Replace(',','.')+" " + point.GetY().ToString().Replace(',','.'))));
-                    break;
                 default:
                     throw new Exception("Неизвестный тип " + type);
             }

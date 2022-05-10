@@ -1,5 +1,4 @@
 ﻿<dx:ThemedWindow    
-                    x:Name="MainWind"
                     xmlns:dxm="http://schemas.devexpress.com/winfx/2008/xaml/map" 
                      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -16,7 +15,7 @@
                     xmlns:designTime="http://schemas.microsoft.com/expression/blend/2008"
                     xmlns:models="clr-namespace:OsmMapViewer.Models"
                     mc:Ignorable="designTime"
-    
+                    x:Name="MainWind"    
                      designTime:DataContext="{designTime:DesignInstance Type={x:Type viewModel:MainWindowViewModel}}"
                      x:Class="OsmMapViewer.Dialogs.MainWindow"
                      Title="OsmMapViewer" Height="658" Width="1400">
@@ -332,9 +331,9 @@
                             </ListBox.ItemContainerStyle>
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
-                                    <Border BorderBrush="#FF0170BB" BorderThickness="0 0 0 1" Padding="0 0 0 15">
+                                    <Border BorderBrush="#FF0170BB" BorderThickness="0 0 0 1" Padding="0 0 0 15" >
                                         <Border.ContextMenu>
-                                            <ContextMenu Tag="{Binding Source={x:Reference MainWind},Path= DataContext}">
+                                            <ContextMenu  Tag="{Binding Source={x:Reference MainWind},Path= DataContext}">
                                                 <MenuItem Header="Точка отправления" CommandParameter="{Binding}"  Command="{Binding Path=Tag.FromPointObject, RelativeSource={RelativeSource AncestorType=ContextMenu,Mode=FindAncestor}}"></MenuItem>
                                                 <MenuItem Header="Точка прибытия" CommandParameter="{Binding}"  Command="{Binding Path=Tag.ToPointObject, RelativeSource={RelativeSource AncestorType=ContextMenu,Mode=FindAncestor}}"></MenuItem>
                                             </ContextMenu>

@@ -32,7 +32,7 @@ namespace OsmMapViewer.Misc
         public static SolidColorBrush SELECT_BRUSH_BORDER = new SolidColorBrush(Colors.Aqua);
 
 
-        public static string OSRM_HOST = "https://routing.openstreetmap.de/routed-car/route/";
+        public static string OSRM_HOST = "https://routing.openstreetmap.de/routed-car/";
 
         public static string GET_DATA = "http://localhost/get_data.php";
         //public const string GET_DATA = "http://10.113.0.183/api/get_data.php";

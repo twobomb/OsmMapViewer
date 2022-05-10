@@ -53,7 +53,7 @@ namespace OsmMapViewer.Dialogs
 
 
 
-            mapControl.ZoomLevel = 16;
+            mapControl.ZoomLevel = 14;
             mapControl.CenterPoint = new GeoPoint( 48.5684458000654, 39.3150812432244);
             mapControl.MouseLeftButtonUp += MapControl_MouseLeftButtonUp;
             

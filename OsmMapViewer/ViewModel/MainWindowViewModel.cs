@@ -919,7 +919,7 @@ public Decimal SizeBorderDrawing {
                 return String.Format("Отображено объектов {0}/{1}",SelectedLayerList.Count,SelectedLayer.Objects.Count);
             }
         }
-
+        CancellationTokenSource cancelSearch;
         public string searchText = "";
         public string SearchText
         {
@@ -986,6 +986,8 @@ public Decimal SizeBorderDrawing {
         
 
         public void ShowAddresses(string query){
+            if (cancelSearch != null)
+                cancelSearch.Cancel();
             Window.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(() =>{
                 SearchText = "";
                 Window.cbe_search.IsPopupOpen = false;
@@ -1006,6 +1008,17 @@ public Decimal SizeBorderDrawing {
                         foreach (var a in res)
                             AddressesResults.Add(a);
                     }));
+                    if (AddressesResults.Count > 0)
+                    {
+                        SelectedAddress = AddressesResults[0];
+                        if (SelectedAddress.CenterPoint != null)
+                        {
+                            Window.mapControl.ZoomToRegion(new MapBounds(SelectedAddress.BBoxLt, SelectedAddress.BBoxRb));
+                            Window.mapControl.CenterPoint = SelectedAddress.CenterPoint;
+                        }
+                    }
+                    else
+                        MsgPrinterVM.Warning("Ничего не найдено",1000,"Результат");
                     Searching = false;
                 }
                 else {
@@ -1017,17 +1030,25 @@ public Decimal SizeBorderDrawing {
             });
         }
         public void Search(string text, bool openPopup = true){
-            if(Searching)
-                return;
+            if (Searching && cancelSearch != null)
+                cancelSearch.Cancel(false);
+            cancelSearch = new CancellationTokenSource();
+            var tokenCancel = cancelSearch.Token;
             Searching = true;
             WebClient client = new WebClient();
             client.Encoding = Encoding.UTF8;
             client.Headers.Add(HttpRequestHeader.UserAgent,"OsmMapViewer");
             var task = client.DownloadStringTaskAsync(String.Format("{0}{1}?q={2}&format=json&limit=10&accept-language=ru", Config.NOMINATIM_HOST, Config.NOMINATIM_SEARCH, text));
             task.GetAwaiter().OnCompleted(() => {
+                if (tokenCancel.IsCancellationRequested)
+                    return;
                 if (task.Status == TaskStatus.RanToCompletion) {
                     var res = Utils.ParseObjects(task.Result);
+                    if (tokenCancel.IsCancellationRequested)
+                        return;
                     Window.Dispatcher.Invoke(DispatcherPriority.Normal, new Action(() => {
+                        if (tokenCancel.IsCancellationRequested)
+                            return;
                         SearchResults.Clear();
                         foreach (var mapObject in res)
                             SearchResults.Add(mapObject);
@@ -1072,7 +1093,7 @@ public Decimal SizeBorderDrawing {
             OnPropertyChanged("ShowLayerObjectsShown");
         }
         //Задержка поиска для autocomplete
-        private Timer searchTimer = new Timer(200)
+        private Timer searchTimer = new Timer(400)
         {
             AutoReset = false
         };
@@ -1732,17 +1753,19 @@ public Decimal SizeBorderDrawing {
             };
 
 
-            Window.cbe_search.KeyUp+= (o, e) => {
-                if (e.Key != System.Windows.Input.Key.Enter)
-                    return;                
-                Task.Run(new Action(()=>{
-                    Task.Delay(400).Wait();
-                    Window.Dispatcher.BeginInvoke(new Action(()=>
-                    {
-                        ShowAddresses(SearchText);
-                    }));
-                }));
+            Window.cbe_search.SelectedIndexChanged += (o, e) =>
+            {
+                ShowAddresses(SearchText);
             };
+            Window.cbe_search.PreviewKeyUp += (o, e) =>            {
+                if (e.Key == Key.Enter && !string.IsNullOrWhiteSpace(SearchText.Trim()))
+                {
+                    if (cancelSearch != null)
+                        cancelSearch.Cancel();
+                    ShowAddresses(SearchText);
+                }
+            };
+
 
         }
 
