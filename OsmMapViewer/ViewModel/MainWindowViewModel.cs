@@ -1558,6 +1558,15 @@ public Decimal SizeBorderDrawing {
                 bool isClick = Utils.GetDistance(e.GetPosition(Window.mapControl),__mousedownpos) < 5;
                 CoordPoint p = Window.mapControl.ScreenPointToCoordPoint(e.GetPosition(Window.mapControl));
 
+                if (isClick){
+                    var hitInfo = Window.mapControl.CalcHitInfo(e.GetPosition(Window.mapControl));
+                    var hitObjects = hitInfo.HitObjects;
+                    if(hitObjects.Length > 0 && (hitObjects[0] as DevExpress.Xpf.Map.MapItem).Tag is MapObject mo && mo.TypeData == "map"){
+                        SelectedMapObject = mo;
+                        if (SelectedLayer == mo.Layer && IsShowLayerObjectList)
+                            SelectedLayerObject = mo;
+                    }
+                }
                 //маршруты
                 if (IsSetModeToRoute && isClick){
                     RouteToPoint = (GeoPoint) p;
@@ -2100,10 +2109,38 @@ public void SearchObjects(string json){
         public RelayCommand SelectPolyAsZone{
             get{
                 return selectPolyAsZone ??
-                       (selectPolyAsZone = new RelayCommand(obj =>
-                       {
-                           if (obj is MapObject o && o.Geometry is MapPolygon mp)
-                           {
+                       (selectPolyAsZone = new RelayCommand(obj =>{
+
+                           List<CoordPoint> points = new List<CoordPoint>();
+                           if (obj is MapObject o) {
+                               if (o.Geometry is MapPolygon mp) {
+                                   foreach (var p in mp.Points)
+                                       points.Add(p);
+                               }
+                               else if (o.Geometry is MapPolyline mpl) {
+                                   foreach (var p in mpl.Points)
+                                       points.Add(p);
+                                   if (points.Count > 0)
+                                       points.Add(points[0]);
+                                   MsgPrinterVM.Warning("Геометрия полилинии была преобразована в полигон");
+                               }
+                               else if (o.Geometry is MapPath mph) {
+                                   if (mph.Data != null && mph.Data is MapPathGeometry mpg) {
+                                       if (mpg.Figures.Count > 0 && mpg.Figures[0] is MapPathFigure mpf) {
+                                           if (mpf.Segments.Count > 0 && mpf.Segments[0] is MapPolyLineSegment mpls) {
+                                               foreach (var p in mpls.Points)
+                                                   points.Add(p);
+                                               if (points.Count > 0)
+                                                   points.Add(points[0]);
+                                               MsgPrinterVM.Warning("Геометрия пути была преобразована в полигон (из первой полилинии пути)");
+                                           }
+                                       }
+                                   }
+                               }
+                               else
+                                   MsgPrinterVM.Error("У объекта не найдена подходящая геометрия");
+                           }
+                           if (points.Count >= 3) { 
                                Window.tab_search_objects.IsSelected = true;
                                IsFindRect = true;
                                var storage = (ServiceLayerVector.Data as MapItemStorage).Items;
@@ -2111,7 +2148,7 @@ public void SearchObjects(string json){
                                storage.Clear();
                                storage.Add(MapPolygonSelection);
                                MapPolygonSelection.Visible = true;
-                               foreach (var pnt in mp.Points) {
+                               foreach (var pnt in points) {
                                    MapPolygonSelection.Points.Add(pnt);
                                    storage.Add(new MapDot()
                                    {
@@ -2122,8 +2159,6 @@ public void SearchObjects(string json){
                                    });
                                }
                            }
-                           else
-                               MsgPrinterVM.Error("У объекта не найдена геометрия полигона");
 
                        }));
             }
@@ -2133,7 +2168,46 @@ public void SearchObjects(string json){
             get{
                 return selectPolyAsZoneImage ??
                        (selectPolyAsZoneImage = new RelayCommand(obj => {
-                           if (obj is MapObject o && o.Geometry is MapPolygon mp) {
+
+
+                           List<CoordPoint> points = new List<CoordPoint>();
+                           if (obj is MapObject o)
+                           {
+                               if (o.Geometry is MapPolygon mp)
+                               {
+                                   foreach (var p in mp.Points)
+                                       points.Add(p);
+                               }
+                               else if (o.Geometry is MapPolyline mpl)
+                               {
+                                   foreach (var p in mpl.Points)
+                                       points.Add(p);
+                                   if (points.Count > 0)
+                                       points.Add(points[0]);
+                                   MsgPrinterVM.Warning("Геометрия полилинии была преобразована в полигон");
+                               }
+                               else if (o.Geometry is MapPath mph)
+                               {
+                                   if (mph.Data != null && mph.Data is MapPathGeometry mpg)
+                                   {
+                                       if (mpg.Figures.Count > 0 && mpg.Figures[0] is MapPathFigure mpf)
+                                       {
+                                           if (mpf.Segments.Count > 0 && mpf.Segments[0] is MapPolyLineSegment mpls)
+                                           {
+                                               foreach (var p in mpls.Points)
+                                                   points.Add(p);
+                                               if (points.Count > 0)
+                                                   points.Add(points[0]);
+                                               MsgPrinterVM.Warning("Геометрия пути была преобразована в полигон (из первой полилинии пути)");
+                                           }
+                                       }
+                                   }
+                               }
+                               else
+                                   MsgPrinterVM.Error("У объекта не найдена подходящая геометрия");
+                           }
+                           if (points.Count >= 3)                           {
+
                                Window.tab_mainpage.IsSelected = true;
                                IsImageAreaActive = true;
                                var storage = (ServiceLayerVector.Data as MapItemStorage).Items;
@@ -2141,7 +2215,8 @@ public void SearchObjects(string json){
                                storage.Clear();
                                storage.Add(MapPolygonSelection);
                                MapPolygonSelection.Visible = true;
-                               foreach (var pnt in mp.Points) {
+                               foreach (var pnt in points)
+                               {
                                    MapPolygonSelection.Points.Add(pnt);
                                    storage.Add(new MapDot()
                                    {
@@ -2152,8 +2227,6 @@ public void SearchObjects(string json){
                                    });
                                }
                            }
-                           else
-                               MsgPrinterVM.Error("У объекта не найдена геометрия полигона");
 
                        }));
             }

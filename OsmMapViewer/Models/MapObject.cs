@@ -115,6 +115,7 @@ namespace OsmMapViewer.Models {
                     Utils.ApplyFillStyle(geometry, FillGeometry);
                     Utils.ApplyStrokeStyle(geometry, StrokeGeometry);
                     Utils.ApplyBorderSize(geometry, BorderGeometry);
+                    geometry.Tag = this;
                 }
 
                 return geometry;

@@ -1035,8 +1035,7 @@ namespace OsmMapViewer{
                     mpf.IsClosed = false;
                     mpf.IsFilled = false;
                     bool isStart = true;
-                    foreach (var coord1 in coord)
-                    {
+                    foreach (var coord1 in coord){
                         MapPolyLineSegment mp = new MapPolyLineSegment();
                         mp.Points.Add(new GeoPoint(Utils.ParseDouble(coord1[1].ToString()),
                             Utils.ParseDouble(coord1[0].ToString())));

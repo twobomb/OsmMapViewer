@@ -859,18 +859,35 @@
         </Grid>
         <dxr:RibbonStatusBarControl Grid.Row="2">
             <dxr:RibbonStatusBarControl.LeftItems>
-                <dxb:BarButtonItem Content="{Binding SelectedMapObjectTitle}" Glyph="{dx:DXImage SvgImages/PDF Viewer/SelectAll.svg}" Command="{Binding FocusOnSelectedMapObject}"/>
-                <dxb:BarButtonItem Command="{Binding RemoveSelectedLayer}" Content="Удалить выделенный объект" Glyph="{dx:DXImage SvgImages/Icon Builder/Actions_DeleteCircled.svg}">
-                    <dxb:BarButtonItem.Style>
-                        <Style TargetType="dxb:BarButtonItem">
+                <dxb:BarButtonItem Content="{Binding SelectedMapObjectTitle}" Glyph="{dx:DXImage SvgImages/PDF Viewer/SelectAll.svg}" Command="{Binding FocusOnSelectedMapObject}">
+                </dxb:BarButtonItem>
+                <dxb:BarSubItem Content="Действия над выбранным объектов" Glyph="{dx:DXImage SvgImages/XAF/ActionContainerMenuBarItem.svg}">
+                    <dxb:BarSubItem.Style>
+                        <Style TargetType="{x:Type dxb:BarSubItem}">
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding SelectedMapObject}" Value="{x:Null}">
-                                    <Setter Property="IsVisible" Value="False"></Setter>
+                                    <DataTrigger.Setters>
+                                        <Setter Property="IsVisible" Value="False"></Setter>
+                                    </DataTrigger.Setters>
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>
-                    </dxb:BarButtonItem.Style>
-                </dxb:BarButtonItem>
+                    </dxb:BarSubItem.Style>
+                    <dxb:BarButtonItem Content="Удалить" CommandParameter="{Binding SelectedMapObject}"  Command="{Binding DeleteObject}"/>
+                    <dxb:BarButtonItem Content="Переименовать" CommandParameter="{Binding SelectedMapObject}"  Command="{Binding RenameObject}"></dxb:BarButtonItem>
+                    <dxb:BarButtonItem Content="Точка отправления" CommandParameter="{Binding SelectedMapObject}"  Command="{Binding FromPointObject}"></dxb:BarButtonItem>
+                    <dxb:BarButtonItem Content="Точка прибытия" CommandParameter="{Binding SelectedMapObject}"  Command="{Binding ToPointObject}"></dxb:BarButtonItem>
+                    <dxb:BarSubItem Content="Дополнительно">
+                        <dxb:BarButtonItem Content="Выделить полигон как зону поиска" CommandParameter="{Binding SelectedMapObject}"  Command="{Binding SelectPolyAsZone}"></dxb:BarButtonItem>
+                        <dxb:BarButtonItem Content="Удалить из слоя все объекты кроме этого" CommandParameter="{Binding SelectedMapObject}"  Command="{Binding DeleteOthers}"></dxb:BarButtonItem>
+                        <dxb:BarButtonItem Content="Выделить полигон как зону формирования изображения" CommandParameter="{Binding SelectedMapObject}"  Command="{Binding SelectPolyAsZoneImage}"></dxb:BarButtonItem>
+                    </dxb:BarSubItem>
+                    <dxb:BarSubItem Content="Внесение изменений">
+                        <dxb:BarButtonItem Content="Изменить номер дома" CommandParameter="{Binding SelectedMapObject}"  Command="{Binding ChangeAddr}"></dxb:BarButtonItem>
+                        <dxb:BarButtonItem Content="Создать дом" CommandParameter="{Binding SelectedMapObject}"  Command="{Binding CreateHouse}"></dxb:BarButtonItem>
+                        
+                    </dxb:BarSubItem>
+                </dxb:BarSubItem>
             </dxr:RibbonStatusBarControl.LeftItems>
 
             <dxr:RibbonStatusBarControl.Style>
